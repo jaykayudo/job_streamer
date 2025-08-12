@@ -1,0 +1,12 @@
+services:
+  selenium-hub:
+    image: seleniarm/standalone-chromium:124.0-20240427
+    container_name: selenium-hub
+    shm_size: 2g
+    ports:
+      - "4444:4444"
+      - "7900:7900"
+    environment:
+      - SE_NODE_OVERRIDE_MAX_SESSIONS=true
+      - SE_NODE_MAX_SESSIONS=10
+      - SE_NODE_SESSION_TIMEOUT=300
