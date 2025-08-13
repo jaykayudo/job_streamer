@@ -1,0 +1,29 @@
+[project]
+name = "job-streamer"
+version = "0.1.0"
+description = "job application automation"
+authors = [
+    {name = "jaykayudo",email = "jaykayudo@gmail.com"}
+]
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.12,<4.0"
+dependencies = [
+    "requests (>=2.32.4,<3.0.0)",
+    "selenium (>=4.34.2,<5.0.0)",
+    "flask (>=3.1.1,<4.0.0)",
+    "sqlalchemy (>=2.0.43,<3.0.0)",
+    "openai (>=1.99.8,<2.0.0)",
+    "pydantic (>=2.11.7,<3.0.0)",
+    "loguru (>=0.7.3,<0.8.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.1"
+ruff = "^0.12.8"
+
