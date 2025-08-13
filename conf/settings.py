@@ -17,7 +17,7 @@ class Settings:
             cls.instance = super(Settings, cls).__new__(cls)
             cls.instance.__load_settings_from_env()
             cls.instance._variable_settings()
-            cls.instance._create_logs_dir()
+            cls.instance._create_missings_dir()
         return cls.instance
 
     def __load_settings_from_env(self):
@@ -34,6 +34,7 @@ class Settings:
             "REDIS_URL", f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
         )
         self.SE_REMOTE_URL = os.getenv("SE_REMOTE_URL", "http://localhost:4444/wd/hub")
+        self.DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///example.db")
 
     def _variable_settings(self):
         """
@@ -43,13 +44,18 @@ class Settings:
         self.MEDIA_DIR = os.path.join(self.BASE_DIR, "storage/media/")
         self.LOGS_DIR = os.path.join(self.BASE_DIR, "logs/")
         self.MODULES_DIR = os.path.join(self.BASE_DIR, "automation")
+        self.FILES_DIR = os.path.join(self.BASE_DIR, "storage/files/")
+        self.STATIC_DIR = os.path.join(self.BASE_DIR, "storage/static")
 
-    def _create_logs_dir(self):
+    def _create_missings_dir(self):
         """
-        Create the logs directory if it does not exist.
+        Create the missing directories if they do not exist.
         """
-        if not os.path.exists(self.LOGS_DIR):
-            os.makedirs(self.LOGS_DIR)
+        os.makedirs(self.MEDIA_DIR, exist_ok=True)
+        os.makedirs(self.LOGS_DIR, exist_ok=True)
+        os.makedirs(self.MODULES_DIR, exist_ok=True)
+        os.makedirs(self.FILES_DIR, exist_ok=True)
+        os.makedirs(self.STATIC_DIR, exist_ok=True)
 
     def get_login_data(self, module: Modules):
         """
