@@ -33,6 +33,9 @@ class Settings:
         self.REDIS_URL = os.getenv(
             "REDIS_URL", f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
         )
+        self.SE_REMOTE_URL = os.getenv("SE_REMOTE_URL", "http://localhost:4444/wd/hub")
+        self.BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.MODULES_DIR = os.path.join(self.BASE_DIR, "automation")
 
     def get_login_data(self, module: LoginModule):
         """
@@ -44,3 +47,15 @@ class Settings:
             "username": os.getenv(settings_key_username),
             "password": os.getenv(settings_key_password),
         }
+
+    def retrieve_all_modules(self) -> list[str]:
+        """
+        Retrieve all modules using os to list the directories in the automation directory.
+        """
+        modules = [
+            f
+            for f in os.listdir(self.MODULES_DIR)
+            if os.path.isdir(os.path.join(self.MODULES_DIR, f))
+        ]
+        modules.remove("core")  # remove the core module as it is not a module
+        return modules
