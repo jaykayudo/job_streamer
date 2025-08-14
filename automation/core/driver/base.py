@@ -39,8 +39,8 @@ class ChromeDriver:
         options_class = cls.build_options(options)
         logger.info(f"Driver options: {options_class}")
         logger.info("Building the driver")
-        driver_class = cls.get_driver_class()
-        driver = driver_class(
+        # driver_class = cls.get_driver_class()
+        driver = webdriver.Remote(
             command_executor=SETTINGS.SE_REMOTE_URL, options=options_class
         )
         return driver
