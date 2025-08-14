@@ -15,7 +15,8 @@ dependencies = [
     "sqlalchemy (>=2.0.43,<3.0.0)",
     "openai (>=1.99.8,<2.0.0)",
     "pydantic (>=2.11.7,<3.0.0)",
-    "loguru (>=0.7.3,<0.8.0)"
+    "loguru (>=0.7.3,<0.8.0)",
+    "prompt-toolkit (>=3.0.51,<4.0.0)"
 ]
 
 

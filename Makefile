@@ -22,5 +22,8 @@ clean:
 	docker compose build
 	docker compose up
 
+run_client:
+	python -m bin.start
+
 
 
