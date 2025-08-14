@@ -53,7 +53,7 @@ class SavedPreference(BaseModel):
     __tablename__ = "saved_preferences"
     name = Column(String(255), nullable=False)
     module_name = Column(String(255), nullable=False)
-    preferences = relationship("Category", secondary=category_preferences, back_populates="saved_preferences")
+    preferences = relationship("Category", secondary=category_preferences)
     
     def __repr__(self):
         return f"<SavedPreference {self.name}>"
