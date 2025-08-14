@@ -1,9 +1,10 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Table
+from sqlalchemy import Column, String, ForeignKey, Table
 from storage.core.engine import BaseModel
 from sqlalchemy.orm import relationship
 
 category_preferences = Table(
     "category_preferences",
+    BaseModel.metadata,
     Column("category_id", String, ForeignKey("categories.id"), primary_key=True),
     Column("saved_preference_id", String, ForeignKey("saved_preferences.id"), primary_key=True),
 )

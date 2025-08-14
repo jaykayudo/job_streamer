@@ -213,3 +213,6 @@ logs/
 
 # temp
 idea_test.py
+
+#db
+example.db
