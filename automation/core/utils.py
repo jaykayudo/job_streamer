@@ -13,6 +13,6 @@ class SingletonPool(Generic[T]):
     Singleton pool for storing the data of a driver instance
     """
 
-    instance: T
+    driver_instance: T
     created_at: Optional[datetime] = None
     lock: Optional[threading.Lock] = None

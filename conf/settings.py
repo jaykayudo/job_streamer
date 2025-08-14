@@ -1,7 +1,7 @@
 import os
 from typing import Literal
 
-LoginModule = Literal["workable", "wellfound", "web3_career"]
+Modules = Literal["workable", "wellfound", "web3_career"]
 
 
 class Settings:
@@ -37,7 +37,7 @@ class Settings:
         self.BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.MODULES_DIR = os.path.join(self.BASE_DIR, "automation")
 
-    def get_login_data(self, module: LoginModule):
+    def get_login_data(self, module: Modules):
         """
         Get login data for a given module.
         """
