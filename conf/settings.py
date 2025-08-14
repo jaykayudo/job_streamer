@@ -34,7 +34,7 @@ class Settings:
             "REDIS_URL", f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
         )
         self.SE_REMOTE_URL = os.getenv("SE_REMOTE_URL", "http://localhost:4444/wd/hub")
-        
+
     def _variable_settings(self):
         """
         Set the variables for the settings.
@@ -43,7 +43,7 @@ class Settings:
         self.MEDIA_DIR = os.path.join(self.BASE_DIR, "storage/media/")
         self.LOGS_DIR = os.path.join(self.BASE_DIR, "logs/")
         self.MODULES_DIR = os.path.join(self.BASE_DIR, "automation")
-        
+
     def _create_logs_dir(self):
         """
         Create the logs directory if it does not exist.

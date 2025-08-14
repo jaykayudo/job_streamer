@@ -11,8 +11,6 @@ from loguru import logger
 SETTINGS = Settings()
 
 
-
-
 class InstancesPool:
     """
     The Pool is used for storing instances and reusing free instances.
@@ -23,13 +21,13 @@ class InstancesPool:
     INSTANCE_LIMIT: int = SETTINGS.SE_NODE_MAX_SESSIONS
     _lock: Lock = Lock()
     driver_class = ChromeDriver
-    
+
     def __new__(cls, module_name: Modules) -> ChromeDriver:
         """
         Create or get an instance of the pool.
         """
         return cls._extract_instance()
-    
+
     @classmethod
     def create_instance(cls) -> ChromeDriver:
         """
@@ -43,7 +41,7 @@ class InstancesPool:
             "--disable-extensions",
         ]
         return cls.driver_class.initailize_driver(driver_options)
-    
+
     @classmethod
     def _extract_instance(cls, module_name: Modules) -> ChromeDriver:
         """
@@ -57,7 +55,9 @@ class InstancesPool:
             cls._clear_old_instances()
             if pool_length >= cls.INSTANCE_LIMIT:
                 # look for a free instance
-                logger.info(f"Looking for a free instance in the pool of {pool_length} instances")
+                logger.info(
+                    f"Looking for a free instance in the pool of {pool_length} instances"
+                )
                 for _, instance in cls._pools.items():
                     if not instance.lock.locked():
                         with instance.lock:
@@ -71,12 +71,10 @@ class InstancesPool:
             logger.info(f"Creating a new instance for {module_name}")
             instance = cls.create_instance()
             cls._pools[pool_key] = SingletonPool(
-                driver_instance=instance,
-                created_at=datetime.now(),
-                lock=Lock()
+                driver_instance=instance, created_at=datetime.now(), lock=Lock()
             )
             return instance
-    
+
     @classmethod
     def _clear_old_instances(cls) -> None:
         """
@@ -84,6 +82,8 @@ class InstancesPool:
         """
         with cls._lock:
             for key, instance in cls._pools.items():
-                if (datetime.now() - instance.created_at).total_seconds() > SETTINGS.SE_NODE_SESSION_TIMEOUT:
+                if (
+                    datetime.now() - instance.created_at
+                ).total_seconds() > SETTINGS.SE_NODE_SESSION_TIMEOUT:
                     logger.info(f"Clearing old instance {key}")
                     cls._pools.pop(key)

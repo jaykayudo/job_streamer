@@ -15,7 +15,6 @@ import random
 SETTINGS = Settings()
 
 
-
 class BaseDriverService:
     """
     The service represents selenium actions that can be performed on the driver
@@ -28,14 +27,14 @@ class BaseDriverService:
         self.driver = self.pool_instance.driver_instance
         self.logger.info(f"Driver initialized for {self.module}")
         self.logger.info(f"Driver is active")
-        
+
     @property
     def logger(self):
         """
         Get the logger for the module.
         """
         return loguru_logger.bind(module=self.module)
-    
+
     @classmethod
     def get_url(cls) -> str:
         """
@@ -96,9 +95,7 @@ class BaseDriverService:
     def _click_element(self, element: WebElement) -> None:
         element.click()
 
-    def _wait_for_page_to_load(
-        self, url_to_contain: str, timeout: int = 900
-    ) -> None:
+    def _wait_for_page_to_load(self, url_to_contain: str, timeout: int = 900) -> None:
         try:
             WebDriverWait(driver=self.driver, timeout=timeout).until(
                 EC.url_contains(url_to_contain)
@@ -106,24 +103,16 @@ class BaseDriverService:
         except TimeoutException:
             return
 
-    def _wait_for_page_to_load_using_script(
-        self, timeout: int = 900
-    ) -> None:
+    def _wait_for_page_to_load_using_script(self, timeout: int = 900) -> None:
         try:
-            DOCUMENT_IS_READY_SCRIPT = (
-                "return document.readyState === 'complete'"
-            )
+            DOCUMENT_IS_READY_SCRIPT = "return document.readyState === 'complete'"
             WebDriverWait(driver=self.driver, timeout=timeout).until(
-                lambda driver: driver.execute_script(
-                    script=DOCUMENT_IS_READY_SCRIPT
-                )
+                lambda driver: driver.execute_script(script=DOCUMENT_IS_READY_SCRIPT)
             )
         except TimeoutException:
             return
 
-    def _get_browser_window_size(
-        self
-    ) -> Tuple[int, int]:
+    def _get_browser_window_size(self) -> Tuple[int, int]:
         window_size = self.driver.get_window_size()
         return window_size["width"], window_size["height"]
 
@@ -131,16 +120,10 @@ class BaseDriverService:
         storage_path = f"{self.media_path}/{filename}.png"
         return storage_path
 
-    def _take_and_save_screenshot(
-        self, filename: str
-    ) -> str:
+    def _take_and_save_screenshot(self, filename: str) -> str:
         WINDOW_X, WINDOW_Y = self._get_browser_window_size()
-        RESIZE_WINDOW_SCRIPT = (
-            f"window.scrollTo({WINDOW_X // 2}, {WINDOW_Y // 2})"
-        )
+        RESIZE_WINDOW_SCRIPT = f"window.scrollTo({WINDOW_X // 2}, {WINDOW_Y // 2})"
         storage_path = self._build_storage_path_of_file(filename=filename)
         self.driver.execute_script(script=RESIZE_WINDOW_SCRIPT)
         self.driver.save_screenshot(filename=storage_path)
         return storage_path
-    
-    
