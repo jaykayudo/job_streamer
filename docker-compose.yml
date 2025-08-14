@@ -1,6 +1,6 @@
 services:
   database:
-    image: postgres:14
+    image: postgres:17
     volumes:
       - job-streamer-db-data:/var/lib/postgresql/data
     environment:
@@ -15,7 +15,7 @@ services:
       timeout: 5s
       retries: 5
   selenium-hub:
-    image: seleniarm/standalone-chromium:124.0-20240427
+    image: seleniarm/standalone-chromium:latest
     container_name: selenium-hub
     shm_size: 2g
     ports:
@@ -25,6 +25,8 @@ services:
       - SE_NODE_OVERRIDE_MAX_SESSIONS=true
       - SE_NODE_MAX_SESSIONS=10
       - SE_NODE_SESSION_TIMEOUT=300
+      - SE_START_XVFB=true
+
 
   redis:
     container_name: redis

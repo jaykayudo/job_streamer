@@ -1,8 +1,8 @@
 from typing import Dict, Literal
 from threading import Lock
-from core.utils import SingletonPool
+from automation.core.utils import SingletonPool
 from conf.settings import Settings, Modules
-from core.driver.base import ChromeDriver
+from automation.core.driver.base import ChromeDriver
 from datetime import datetime
 import random
 from loguru import logger
@@ -26,7 +26,7 @@ class InstancesPool:
         """
         Create or get an instance of the pool.
         """
-        return cls._extract_instance()
+        return cls._extract_instance(module_name)
 
     @classmethod
     def create_instance(cls) -> ChromeDriver:
@@ -48,11 +48,12 @@ class InstancesPool:
         Extract an instance from the pool or create a new one.
         This method is thread safe.
         """
+        cls._clear_old_instances()
         with cls._lock:
             pool_key = f"{module_name}-{datetime.now().strftime('%Y%m%d%H%M%S')}"
             pool_length = len(cls._pools)
             logger.info(f"Pool length: {pool_length}")
-            cls._clear_old_instances()
+
             if pool_length >= cls.INSTANCE_LIMIT:
                 # look for a free instance
                 logger.info(
@@ -70,7 +71,7 @@ class InstancesPool:
             # create a new instance
             logger.info(f"Creating a new instance for {module_name}")
             instance = cls.create_instance()
-            cls._pools[pool_key] = SingletonPool(
+            cls._pools[pool_key] = SingletonPool[ChromeDriver](
                 driver_instance=instance, created_at=datetime.now(), lock=Lock()
             )
             return instance

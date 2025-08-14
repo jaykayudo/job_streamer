@@ -1,6 +1,6 @@
 from conf.settings import Settings, Modules
 from typing import Literal
-from core.pool import InstancesPool
+from automation.core.pool import InstancesPool
 from loguru import logger as loguru_logger
 from selenium.webdriver.remote.webdriver import WebElement
 from selenium import webdriver
@@ -24,7 +24,7 @@ class BaseDriverService:
     def __init__(self, module_name: Modules):
         self.module = module_name
         self.pool_instance = InstancesPool(module_name)
-        self.driver = self.pool_instance.driver_instance
+        self.driver: webdriver.Remote = self.pool_instance.driver
         self.logger.info(f"Driver initialized for {self.module}")
         self.logger.info(f"Driver is active")
 
@@ -33,7 +33,7 @@ class BaseDriverService:
         """
         Get the logger for the module.
         """
-        return loguru_logger.bind(module=self.module)
+        return loguru_logger
 
     @classmethod
     def get_url(cls) -> str:
@@ -41,6 +41,9 @@ class BaseDriverService:
         Get the base url for the module.
         """
         raise NotImplementedError("This method should be implemented by the subclass")
+
+    def get_base_page(self):
+        return self.driver.get(self.get_url())
 
     def _initialize_user_window(self):
         pass
