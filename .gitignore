@@ -208,3 +208,5 @@ __marimo__/
 
 # Ruff
 .ruff_cache/
+
+logs/
