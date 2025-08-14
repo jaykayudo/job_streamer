@@ -2,6 +2,7 @@ import pytest
 from sqlalchemy import create_engine
 from storage.core.engine import BaseModel, sessionmaker
 
+
 @pytest.fixture(scope="session")
 def engine():
     """Create a temporary database engine for testing."""

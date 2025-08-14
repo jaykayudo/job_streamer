@@ -7,7 +7,7 @@ def init_db():
     logger.info("Initializing database")
     BaseModel.metadata.create_all(bind=engine)
     logger.info("Database initialized")
-    
+
 
 if __name__ == "__main__":
     init_db()
