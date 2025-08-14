@@ -34,6 +34,7 @@ class Settings:
             "REDIS_URL", f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
         )
         self.SE_REMOTE_URL = os.getenv("SE_REMOTE_URL", "http://localhost:4444/wd/hub")
+        self.DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///example.db")
 
     def _variable_settings(self):
         """
