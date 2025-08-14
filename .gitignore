@@ -210,3 +210,6 @@ __marimo__/
 .ruff_cache/
 
 logs/
+
+# temp
+idea_test.py
