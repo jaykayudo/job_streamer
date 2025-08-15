@@ -216,3 +216,6 @@ idea_test.py
 
 #db
 example.db
+
+# config
+conf/config.toml

@@ -1,5 +1,8 @@
 import os
 from typing import Literal
+import toml
+from conf.configuration import FULL_CONFIG
+from loguru import logger
 
 Modules = Literal["workable", "wellfound", "web3_career"]
 
@@ -18,6 +21,7 @@ class Settings:
             cls.instance.__load_settings_from_env()
             cls.instance._variable_settings()
             cls.instance._create_missings_dir()
+            cls.instance._load_automation_config()
         return cls.instance
 
     def __load_settings_from_env(self):
@@ -58,6 +62,29 @@ class Settings:
         os.makedirs(self.FILES_DIR, exist_ok=True)
         os.makedirs(self.STATIC_DIR, exist_ok=True)
         os.makedirs(self.RESUMES_DIR, exist_ok=True)
+
+    def _load_automation_config(self):
+        """
+        Load the automation config from the configuration file.
+        if the config file does not exist, create it from the FULL_CONFIG.
+        and load the config from the file.
+        """
+        config_file_path = os.path.join(self.BASE_DIR, "conf/config.toml")
+
+        try:
+            # check if file exists
+            if not os.path.exists(config_file_path):
+                # create the file
+                with open(config_file_path, "w") as f:
+                    toml.dump(FULL_CONFIG, f)
+                self.PLATFORM_CONFIG = FULL_CONFIG
+            else:
+                # load the config from the file
+                with open(config_file_path, "r") as f:
+                    self.PLATFORM_CONFIG = toml.load(f)
+        except Exception as err:
+            logger.error(f"Could not load platform config: {err}")
+            self.PLATFORM_CONFIG = FULL_CONFIG
 
     def get_login_data(self, module: Modules):
         """
