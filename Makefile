@@ -25,5 +25,9 @@ clean:
 run_client:
 	python -m bin.start
 
+docker_full_run:
+	docker compose up --build
+	docker attach job-streamer
+
 
 

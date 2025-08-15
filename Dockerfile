@@ -19,8 +19,4 @@ RUN pip install poetry && \
 # Copy application code
 COPY . .
 
-# Expose port
-EXPOSE 8000
-
-# Default command
-CMD ["python", "-m", "client.web"]
+# TODO: Add the command to run the entire application

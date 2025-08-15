@@ -1,4 +1,17 @@
 services:
+  job-streamer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      - database
+      - selenium-hub
+    env_file:
+      - .env
+    volumes:
+      - job-streamer-app-data:/app
   database:
     image: postgres:17
     volumes:
@@ -37,6 +50,7 @@ services:
 
 volumes:
   job-streamer-db-data:
+  job-streamer-app-data:
 
 networks:
   default:
