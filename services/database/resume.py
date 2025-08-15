@@ -20,9 +20,9 @@ class ResumeService:
         Create a resume in the database
         """
         full_fill_path = os.path.join(SETTINGS.RESUMES_DIR, file_path)
-        resume = Resume(name=name, file_path=full_fill_path)
+        resume = Resume(name=name, path=full_fill_path)
         resume.save()
-        session.refresh(resume)
+        # session.refresh(resume)
         return resume
 
     @classmethod
@@ -30,13 +30,13 @@ class ResumeService:
         """
         Get a resume from the database
         """
-        return session.get(Resume, {"name": name})
+        return session.query(Resume).filter_by(name=name).first()
 
     @classmethod
     def delete_resume(cls, name: str) -> None:
         """
         Delete a resume from the database
         """
-        resume = session.get(Resume, {"name": name})
+        resume = session.query(Resume).filter_by(name=name).first()
         if resume:
             resume.delete()
