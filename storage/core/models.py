@@ -17,6 +17,7 @@ category_preferences = Table(
 
 class Application(BaseModel):
     __tablename__ = "applications"
+    platform = Column(String(255), nullable=False)
     job_title = Column(String(255), nullable=False)
     job_description = Column(String(255), nullable=False)
     job_url = Column(String(255), nullable=False)
