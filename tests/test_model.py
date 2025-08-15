@@ -1,10 +1,10 @@
 from storage.core.models import Application, Resume, Bio, SavedPreference, Category
-from storage.core.engine import engine, session, BaseModel
 
 
 def test_application(db_session):
     application = Application(
         job_title="Test Job Title",
+        platform="wellfound",
         job_description="Test Job Description",
         job_url="https://www.google.com",
         job_location="Test Job Location",
