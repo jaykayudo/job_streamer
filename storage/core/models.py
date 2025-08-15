@@ -1,6 +1,7 @@
 from sqlalchemy import Column, String, ForeignKey, Table
 from storage.core.engine import BaseModel
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped
+from typing import List
 
 category_preferences = Table(
     "category_preferences",
@@ -51,7 +52,7 @@ class Bio(BaseModel):
 
 class Category(BaseModel):
     __tablename__ = "categories"
-    name = Column(String(255), nullable=False)
+    name = Column(String(255), nullable=False, unique=True)
 
     def __repr__(self):
         return f"<Category {self.name}>"
@@ -61,7 +62,9 @@ class SavedPreference(BaseModel):
     __tablename__ = "saved_preferences"
     name = Column(String(255), nullable=False)
     module_name = Column(String(255), nullable=False)
-    preferences = relationship("Category", secondary=category_preferences)
+    preferences: Mapped[List[Category]] = relationship(
+        "Category", secondary=category_preferences
+    )
 
     def __repr__(self):
         return f"<SavedPreference {self.name}>"
