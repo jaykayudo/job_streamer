@@ -79,3 +79,6 @@ class Settings:
         ]
         modules.remove("core")  # remove the core module as it is not a module
         return modules
+
+
+SETTINGS = Settings()
