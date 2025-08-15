@@ -46,6 +46,7 @@ class Settings:
         self.MODULES_DIR = os.path.join(self.BASE_DIR, "automation")
         self.FILES_DIR = os.path.join(self.BASE_DIR, "storage/files/")
         self.STATIC_DIR = os.path.join(self.BASE_DIR, "storage/static")
+        self.RESUMES_DIR = os.path.join(self.FILES_DIR, "storage/resumes")
 
     def _create_missings_dir(self):
         """
@@ -56,6 +57,7 @@ class Settings:
         os.makedirs(self.MODULES_DIR, exist_ok=True)
         os.makedirs(self.FILES_DIR, exist_ok=True)
         os.makedirs(self.STATIC_DIR, exist_ok=True)
+        os.makedirs(self.RESUMES_DIR, exist_ok=True)
 
     def get_login_data(self, module: Modules):
         """
