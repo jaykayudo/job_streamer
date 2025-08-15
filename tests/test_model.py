@@ -50,7 +50,7 @@ def test_category(db_session):
 
 
 def test_saved_preference(db_session):
-    category = Category(name="Test Category")
+    category = Category(name="Test Category 1")
     saved_preference = SavedPreference(
         name="Test Saved Preference", module_name="Test Module"
     )

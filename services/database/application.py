@@ -20,7 +20,8 @@ class ApplicationService:
         """
         query = session.query(Application)
         if platform:
-            query = query.filter(Application.platform == platform)
+            print("platform", platform)
+            query = query.filter_by(platform=platform)
         return query.all()
 
     @classmethod
@@ -52,5 +53,4 @@ class ApplicationService:
             job_company_url=job_company_url,
         )
         application.save()
-        session.refresh(application)
         return application
