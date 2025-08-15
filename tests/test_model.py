@@ -1,10 +1,10 @@
 from storage.core.models import Application, Resume, Bio, SavedPreference, Category
-from storage.core.engine import engine, session, BaseModel
 
 
 def test_application(db_session):
     application = Application(
         job_title="Test Job Title",
+        platform="wellfound",
         job_description="Test Job Description",
         job_url="https://www.google.com",
         job_location="Test Job Location",
@@ -50,7 +50,7 @@ def test_category(db_session):
 
 
 def test_saved_preference(db_session):
-    category = Category(name="Test Category")
+    category = Category(name="Test Category 1")
     saved_preference = SavedPreference(
         name="Test Saved Preference", module_name="Test Module"
     )
