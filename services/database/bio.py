@@ -18,7 +18,7 @@ class BioService:
         """
         bio = Bio(name=name, bio=bio)
         bio.save()
-        session.refresh(bio)
+        # session.refresh(bio)
         return bio
 
     @classmethod
@@ -26,7 +26,7 @@ class BioService:
         """
         Get a bio from the database
         """
-        return session.get(Bio, {"name": name})
+        return session.query(Bio).filter_by(name=name).first()
 
     @classmethod
     def delete_bio(cls, name: str) -> None:
