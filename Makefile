@@ -8,10 +8,10 @@ test:
 	pytest
 
 build:
-	docker compose build
+	HOST=0.0.0.0 docker compose build
 
 run:
-	docker compose up
+	HOST=0.0.0.0 docker compose up
 
 stop:
 	docker compose down
@@ -19,8 +19,8 @@ stop:
 clean:
 	docker compose down
 	docker compose rm -f
-	docker compose build
-	docker compose up
+	HOST=0.0.0.0 docker compose build
+	HOST=0.0.0.0 docker compose up
 
 run_client:
 	python -m bin.start
