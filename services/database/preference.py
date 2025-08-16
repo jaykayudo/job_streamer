@@ -28,11 +28,11 @@ class PreferenceService:
         Create a preference in the database
         """
         categories = [cls.get_or_create_category(name) for name in preferences]
-        preference = SavedPreference(
-            name=name, module_name=module_name, preferences=categories
-        )
+        preference = SavedPreference(name=name, module_name=module_name)
         preference.save()
-        session.refresh(preference)
+        preference.preferences.extend(categories)
+        preference.save()
+        # session.refresh(preference)
         return preference
 
     @classmethod
@@ -40,7 +40,7 @@ class PreferenceService:
         """
         Add a category to a preference
         """
-        preference = session.get(SavedPreference, preference_id)
+        preference = session.query(SavedPreference).filter_by(id=preference_id).first()
         if not preference:
             return False
         category = cls.get_or_create_category(category_name)
@@ -56,7 +56,9 @@ class PreferenceService:
         """
         Remove a category from a preference
         """
-        preference: SavedPreference = session.get(SavedPreference, preference_id)
+        preference: SavedPreference = (
+            session.query(SavedPreference).filter_by(id=preference_id).first()
+        )
         if not preference:
             return False
         category = cls.get_or_create_category(category_name)
@@ -70,13 +72,13 @@ class PreferenceService:
         """
         Get a preference from the database
         """
-        return session.get(SavedPreference, {"name": name})
+        return session.query(SavedPreference).filter_by(name=name).first()
 
     @classmethod
     def delete_preference(cls, name: str) -> None:
         """
         Delete a preference from the database
         """
-        preference = session.get(SavedPreference, {"name": name})
+        preference = session.query(SavedPreference).filter_by(name=name).first()
         if preference:
             preference.delete()
