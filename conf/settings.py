@@ -84,7 +84,7 @@ class Settings:
                     self.PLATFORM_CONFIG = toml.load(f)
         except Exception as err:
             logger.error(f"Could not load platform config: {err}")
-            self.PLATFORM_CONFIG = {}
+            self.PLATFORM_CONFIG = FULL_CONFIG
 
     def get_login_data(self, module: Modules):
         """
