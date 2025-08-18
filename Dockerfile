@@ -16,6 +16,11 @@ RUN pip install poetry && \
     poetry config virtualenvs.create false && \
     poetry install --no-dev
 
+# Download spacy model for resume data parser
+RUN python -m spacy download en_core_web_sm && \
+    python -m nltk.downloader words && \
+    python -m nltk.downloader stopwords
+
 # Copy application code
 COPY . .
 
