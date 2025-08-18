@@ -5,10 +5,11 @@ from conf.settings import Settings, Modules
 from automation.core.driver.base import ChromeDriver
 from datetime import datetime
 import random
-from loguru import logger
+from utils.logging import JobStreamerLogger
 
 
 SETTINGS = Settings()
+logger = JobStreamerLogger().get_logger()
 
 
 class InstancesPool:

@@ -1,6 +1,8 @@
-from loguru import logger
 from storage.core.engine import engine, BaseModel
 from storage.core.models import *
+from utils.logging import JobStreamerLogger
+
+logger = JobStreamerLogger().get_logger()
 
 
 def init_db():
