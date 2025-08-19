@@ -1,10 +1,11 @@
-from loguru import logger
+from utils.logging import JobStreamerLogger
 from selenium import webdriver
 from selenium.webdriver.common.options import ArgOptions
 from conf.settings import Settings
 from typing import Self
 
 SETTINGS = Settings()
+logger = JobStreamerLogger().get_logger()
 
 
 class ChromeDriver:

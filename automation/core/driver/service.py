@@ -1,7 +1,7 @@
 from conf.settings import Settings, Modules
 from typing import Literal
 from automation.core.pool import InstancesPool
-from loguru import logger as loguru_logger
+from utils.logging import JobStreamerLogger
 from selenium.webdriver.remote.webdriver import WebElement
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
@@ -13,6 +13,7 @@ from typing import Optional, Union, Tuple
 import random
 
 SETTINGS = Settings()
+logger = JobStreamerLogger().get_logger()
 
 
 class BaseDriverService:
@@ -33,7 +34,7 @@ class BaseDriverService:
         """
         Get the logger for the module.
         """
-        return loguru_logger
+        return logger
 
     @classmethod
     def get_url(cls) -> str:
