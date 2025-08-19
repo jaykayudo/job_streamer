@@ -1,7 +1,6 @@
 from pydantic import BaseModel
 from enum import Enum
 from typing import Callable, TypeAlias
-from conf.settings import Modules
 
 
 class SelectionType(Enum):
