@@ -40,7 +40,9 @@ class WorkExperienceService:
         """
         Delete a work experience from the database
         """
-        work_experience = session.get(WorkExperience, {"id": work_experience_id})
+        work_experience = (
+            session.query(WorkExperience).filter_by(id=work_experience_id).first()
+        )
         if work_experience:
             work_experience.delete()
 
