@@ -31,6 +31,9 @@ class Job(BaseModel):
     location: Optional[str] = None
     platform: Modules
 
+    def __str__(self):
+        return self.title
+
 
 class JobDetails(BaseModel):
     """
@@ -44,6 +47,9 @@ class JobDetails(BaseModel):
     company_description: Optional[str] = None
     posted_date: Optional[str] = None
 
+    def __str__(self):
+        return self.job.title
+
 
 class JobFilter(BaseModel):
     """
@@ -52,6 +58,9 @@ class JobFilter(BaseModel):
 
     id: Optional[str] = None
     name: str
+
+    def __str__(self):
+        return self.name
 
 
 class JobApplicationDetails(BaseModel):
@@ -64,6 +73,9 @@ class JobApplicationDetails(BaseModel):
     extra_description: Optional[str] = None
     element_type: InputElementType
 
+    def __str__(self):
+        return self.title
+
 
 class JobApplicationDetailsAnswer(BaseModel):
     """
@@ -72,6 +84,9 @@ class JobApplicationDetailsAnswer(BaseModel):
 
     application_details: JobApplicationDetails
     value: str
+
+    def __str__(self):
+        return self.application_details.title
 
 
 class HiringType(BaseModel):
@@ -83,6 +98,9 @@ class HiringType(BaseModel):
     name: str
     unique_selector: str
 
+    def __str__(self):
+        return self.name
+
 
 class Industry(BaseModel):
     """
@@ -92,6 +110,9 @@ class Industry(BaseModel):
     id: Optional[str] = None
     name: str
     unique_selector: str
+
+    def __str__(self):
+        return self.name
 
 
 class Skill(BaseModel):
@@ -103,6 +124,9 @@ class Skill(BaseModel):
     name: str
     unique_selector: str
 
+    def __str__(self):
+        return self.name
+
 
 class Location(BaseModel):
     """
@@ -113,6 +137,9 @@ class Location(BaseModel):
     name: str
     unique_selector: str
 
+    def __str__(self):
+        return self.name
+
 
 class Category(BaseModel):
     """
@@ -122,3 +149,6 @@ class Category(BaseModel):
     id: Optional[str] = None
     name: str
     unique_selector: str
+
+    def __str__(self):
+        return self.name
