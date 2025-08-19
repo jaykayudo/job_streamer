@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, ForeignKey, Table, DateTime
 from storage.core.engine import BaseModel
 from sqlalchemy.orm import relationship, Mapped
-from typing import List
+from typing import List, Dict, Any
 
 category_preferences = Table(
     "category_preferences",
@@ -31,6 +31,20 @@ class Application(BaseModel):
     def __repr__(self):
         return f"<Application {self.job_title}>"
 
+    def json_dump(self) -> Dict[str, Any]:
+        return {
+            **super().json_dump(),
+            "job_title": self.job_title,
+            "platform": self.platform,
+            "job_description": self.job_description,
+            "job_url": self.job_url,
+            "job_location": self.job_location,
+            "job_salary": self.job_salary,
+            "job_company": self.job_company,
+            "job_company_url": self.job_company_url,
+            "application_detail_file_path": self.application_detail_file_path,
+        }
+
 
 class Resume(BaseModel):
     __tablename__ = "resumes"
@@ -39,6 +53,13 @@ class Resume(BaseModel):
 
     def __repr__(self):
         return f"<Resume {self.name}>"
+
+    def json_dump(self) -> Dict[str, Any]:
+        return {
+            **super().json_dump(),
+            "name": self.name,
+            "path": self.path,
+        }
 
 
 class Bio(BaseModel):
@@ -51,6 +72,17 @@ class Bio(BaseModel):
     def __repr__(self):
         return f"<Bio {self.name}>"
 
+    def json_dump(self) -> Dict[str, Any]:
+        return {
+            **super().json_dump(),
+            "name": self.name,
+            "bio": self.bio,
+            "projects": [project.json_dump() for project in self.projects],
+            "work_experiences": [
+                work_experience.json_dump() for work_experience in self.work_experiences
+            ],
+        }
+
 
 class Category(BaseModel):
     __tablename__ = "categories"
@@ -58,6 +90,12 @@ class Category(BaseModel):
 
     def __repr__(self):
         return f"<Category {self.name}>"
+
+    def json_dump(self) -> Dict[str, Any]:
+        return {
+            **super().json_dump(),
+            "name": self.name,
+        }
 
 
 class SavedPreference(BaseModel):
@@ -70,6 +108,14 @@ class SavedPreference(BaseModel):
 
     def __repr__(self):
         return f"<SavedPreference {self.name}>"
+
+    def json_dump(self) -> Dict[str, Any]:
+        return {
+            **super().json_dump(),
+            "name": self.name,
+            "module_name": self.module_name,
+            "preferences": [category.json_dump() for category in self.preferences],
+        }
 
 
 class Project(BaseModel):
@@ -84,6 +130,16 @@ class Project(BaseModel):
     def __repr__(self):
         return f"<Project {self.name}>"
 
+    def json_dump(self) -> Dict[str, Any]:
+        return {
+            **super().json_dump(),
+            "bio": self.bio.json_dump(),
+            "name": self.name,
+            "description": self.description,
+            "tools": self.tools,
+            "impact": self.impact,
+        }
+
 
 class WorkExperience(BaseModel):
     __tablename__ = "work_experiences"
@@ -97,3 +153,14 @@ class WorkExperience(BaseModel):
 
     def __repr__(self):
         return f"<WorkExperience {self.company_name}>"
+
+    def json_dump(self) -> Dict[str, Any]:
+        return {
+            **super().json_dump(),
+            "bio": self.bio.json_dump(),
+            "company_name": self.company_name,
+            "role": self.role,
+            "start_date": self.start_date,
+            "end_date": self.end_date,
+            "description": self.description,
+        }

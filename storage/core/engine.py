@@ -1,3 +1,4 @@
+from typing import Any, Dict
 from sqlalchemy import create_engine
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -33,6 +34,16 @@ class BaseModel(DeclarativeBase):
     id = Column(String(36), primary_key=True, default=generate_uuid)
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+    def json_dump(self) -> Dict[str, Any]:
+        """
+        convert the model fields to dict
+        """
+        return {
+            "id": self.id,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+        }
 
     @classmethod
     def create(cls, **kwargs):
