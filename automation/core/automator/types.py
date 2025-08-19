@@ -1,8 +1,21 @@
 from enum import Enum
 from pydantic import BaseModel
-from typing import Optional
+from typing import Literal, Optional
 
 from conf.settings import Modules
+
+
+SELECTOR_TYPE = Literal["xpath", "css", "id", "class", "name", "tag", "attribute"]
+
+
+class BaseModelWithUniqueId(BaseModel):
+    """
+    Represent a model with a unique id
+    """
+
+    id: Optional[str] = None
+    unique_selector: str  # xpath, css, etc. for finding the element
+    selector_type: SELECTOR_TYPE
 
 
 class InputElementType(str, Enum):
@@ -63,13 +76,12 @@ class JobFilter(BaseModel):
         return self.name
 
 
-class JobApplicationDetails(BaseModel):
+class JobApplicationDetails(BaseModelWithUniqueId):
     """
     Represent the details of a job application form field
     """
 
     title: str
-    unique_selector: str  # xpath, css, etc. for finding the element
     extra_description: Optional[str] = None
     element_type: InputElementType
 
@@ -77,7 +89,7 @@ class JobApplicationDetails(BaseModel):
         return self.title
 
 
-class JobApplicationDetailsAnswer(BaseModel):
+class JobApplicationDetailsAnswer(BaseModelWithUniqueId):
     """
     Represent the answer to a job application form field
     """
@@ -89,66 +101,61 @@ class JobApplicationDetailsAnswer(BaseModel):
         return self.application_details.title
 
 
-class HiringType(BaseModel):
+class HiringType(BaseModelWithUniqueId):
     """
     Represent a hiring type
     """
 
     id: Optional[str] = None
     name: str
-    unique_selector: str
 
     def __str__(self):
         return self.name
 
 
-class Industry(BaseModel):
+class Industry(BaseModelWithUniqueId):
     """
     Represent an industry
     """
 
     id: Optional[str] = None
     name: str
-    unique_selector: str
 
     def __str__(self):
         return self.name
 
 
-class Skill(BaseModel):
+class Skill(BaseModelWithUniqueId):
     """
     Represent a skill
     """
 
     id: Optional[str] = None
     name: str
-    unique_selector: str
 
     def __str__(self):
         return self.name
 
 
-class Location(BaseModel):
+class Location(BaseModelWithUniqueId):
     """
     Represent a location
     """
 
     id: Optional[str] = None
     name: str
-    unique_selector: str
 
     def __str__(self):
         return self.name
 
 
-class Category(BaseModel):
+class Category(BaseModelWithUniqueId):
     """
     Represent a category
     """
 
     id: Optional[str] = None
     name: str
-    unique_selector: str
 
     def __str__(self):
         return self.name
