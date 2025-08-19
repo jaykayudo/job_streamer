@@ -1,5 +1,7 @@
 from pydantic import BaseModel
 from enum import Enum
+from typing import Callable, TypeAlias
+from conf.settings import Modules
 
 
 class SelectionType(Enum):
@@ -24,3 +26,15 @@ class WorkStyle(Enum):
 class ClientType(Enum):
     CMD = "cmd"
     WEB = "web"
+
+
+Reader: TypeAlias = Callable[[str], str]
+
+
+class SalaryRange(BaseModel):
+    """
+    Represent a salary range
+    """
+
+    min: int
+    max: int

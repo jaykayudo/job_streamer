@@ -72,3 +72,53 @@ class JobApplicationDetailsAnswer(BaseModel):
 
     application_details: JobApplicationDetails
     value: str
+
+
+class HiringType(BaseModel):
+    """
+    Represent a hiring type
+    """
+
+    id: Optional[str] = None
+    name: str
+    unique_selector: str
+
+
+class Industry(BaseModel):
+    """
+    Represent an industry
+    """
+
+    id: Optional[str] = None
+    name: str
+    unique_selector: str
+
+
+class Skill(BaseModel):
+    """
+    Represent a skill
+    """
+
+    id: Optional[str] = None
+    name: str
+    unique_selector: str
+
+
+class Location(BaseModel):
+    """
+    Represent a location
+    """
+
+    id: Optional[str] = None
+    name: str
+    unique_selector: str
+
+
+class Category(BaseModel):
+    """
+    Represent a category
+    """
+
+    id: Optional[str] = None
+    name: str
+    unique_selector: str
