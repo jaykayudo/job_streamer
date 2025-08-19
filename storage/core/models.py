@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, ForeignKey, Table
+from sqlalchemy import Column, String, ForeignKey, Table, DateTime
 from storage.core.engine import BaseModel
 from sqlalchemy.orm import relationship, Mapped
 from typing import List
@@ -45,6 +45,8 @@ class Bio(BaseModel):
     __tablename__ = "bios"
     name = Column(String(255), nullable=False)
     bio = Column(String(255), nullable=False)
+    projects = relationship("Project", back_populates="bio")
+    work_experiences = relationship("WorkExperience", back_populates="bio")
 
     def __repr__(self):
         return f"<Bio {self.name}>"
@@ -68,3 +70,30 @@ class SavedPreference(BaseModel):
 
     def __repr__(self):
         return f"<SavedPreference {self.name}>"
+
+
+class Project(BaseModel):
+    __tablename__ = "projects"
+    bio_id = Column(String(36), ForeignKey("bios.id"), nullable=False)
+    bio: Mapped[Bio] = relationship("Bio", back_populates="projects")
+    name = Column(String(255), nullable=False)
+    description = Column(String(255), nullable=False)
+    tools = Column(String(255), nullable=False)
+    impact = Column(String(255), nullable=True)
+
+    def __repr__(self):
+        return f"<Project {self.name}>"
+
+
+class WorkExperience(BaseModel):
+    __tablename__ = "work_experiences"
+    bio_id = Column(String(36), ForeignKey("bios.id"), nullable=False)
+    bio: Mapped[Bio] = relationship("Bio", back_populates="work_experiences")
+    company_name = Column(String(255), nullable=False)
+    role = Column(String(255), nullable=False)
+    start_date = Column(DateTime, nullable=False)
+    end_date = Column(DateTime, nullable=True)
+    description = Column(String(255), nullable=True)
+
+    def __repr__(self):
+        return f"<WorkExperience {self.company_name}>"
