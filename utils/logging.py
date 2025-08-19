@@ -41,3 +41,9 @@ class JobStreamerLogger:
         Get the logger.
         """
         return self.logger
+
+    def handle_exception(self, e: Exception):
+        """
+        Handle an exception.
+        """
+        self.logger.error(f"Exception: {e}")
