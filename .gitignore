@@ -219,3 +219,12 @@ example.db
 
 # config
 conf/config.toml
+
+# storages
+storage/files
+storage/media
+storage/static
+storage/resumes
+
+# ds-store
+.DS_Store

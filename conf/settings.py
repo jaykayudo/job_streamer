@@ -3,6 +3,7 @@ from typing import Literal
 import toml
 from conf.configuration import FULL_CONFIG
 from loguru import logger
+from utils.types import ClientType
 
 Modules = Literal["workable", "wellfound", "web3_career"]
 
@@ -19,7 +20,7 @@ class Settings:
         if cls.instance is None:
             cls.instance = super(Settings, cls).__new__(cls)
             cls.instance.__load_settings_from_env()
-            cls.instance._variable_settings()
+            cls.instance._path_settings()
             cls.instance._create_missings_dir()
             cls.instance._load_automation_config()
         return cls.instance
@@ -40,17 +41,20 @@ class Settings:
         self.SE_REMOTE_URL = os.getenv("SE_REMOTE_URL", "http://localhost:4444/wd/hub")
         self.DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///example.db")
 
-    def _variable_settings(self):
+    def _path_settings(self):
         """
         Set the variables for the settings.
         """
         self.BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        self.MEDIA_DIR = os.path.join(self.BASE_DIR, "storage/media/")
+        self.MEDIA_DIR = os.path.join(self.BASE_DIR, "media/")
         self.LOGS_DIR = os.path.join(self.BASE_DIR, "logs/")
         self.MODULES_DIR = os.path.join(self.BASE_DIR, "automation")
         self.FILES_DIR = os.path.join(self.BASE_DIR, "storage/files/")
         self.STATIC_DIR = os.path.join(self.BASE_DIR, "storage/static")
-        self.RESUMES_DIR = os.path.join(self.FILES_DIR, "storage/resumes")
+        self.RESUMES_DIR = os.path.join(self.BASE_DIR, "storage/resumes")
+
+    def _other_settings(self):
+        self.CLIENT_TYPE = None
 
     def _create_missings_dir(self):
         """
@@ -96,6 +100,12 @@ class Settings:
             "username": os.getenv(settings_key_username),
             "password": os.getenv(settings_key_password),
         }
+
+    def update_client_type(self, client_type: ClientType):
+        """
+        Update the client type.
+        """
+        self.CLIENT_TYPE = client_type
 
     def retrieve_all_modules(self) -> list[str]:
         """
