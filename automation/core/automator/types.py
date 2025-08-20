@@ -13,7 +13,7 @@ class BaseModelWithUniqueId(BaseModel):
     Represent a model with a unique id
     """
 
-    id: Optional[str] = None
+    id: str  # same as unique_selector in most cases
     unique_selector: str  # xpath, css, etc. for finding the element
     selector_type: SELECTOR_TYPE
 
@@ -106,7 +106,6 @@ class HiringType(BaseModelWithUniqueId):
     Represent a hiring type
     """
 
-    id: Optional[str] = None
     name: str
 
     def __str__(self):
@@ -118,7 +117,6 @@ class Industry(BaseModelWithUniqueId):
     Represent an industry
     """
 
-    id: Optional[str] = None
     name: str
 
     def __str__(self):
@@ -130,7 +128,6 @@ class Skill(BaseModelWithUniqueId):
     Represent a skill
     """
 
-    id: Optional[str] = None
     name: str
 
     def __str__(self):
@@ -142,7 +139,6 @@ class Location(BaseModelWithUniqueId):
     Represent a location
     """
 
-    id: Optional[str] = None
     name: str
 
     def __str__(self):
@@ -154,7 +150,6 @@ class Category(BaseModelWithUniqueId):
     Represent a category
     """
 
-    id: Optional[str] = None
     name: str
 
     def __str__(self):
