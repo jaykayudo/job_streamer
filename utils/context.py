@@ -1,4 +1,4 @@
-from pydantic import BaseModel, field_serializer
+from pydantic import BaseModel, ConfigDict, field_serializer
 from typing import List, Optional
 from conf.settings import Modules
 from storage.core.models import Bio, Resume
@@ -17,6 +17,7 @@ class AutomationRequestContext(BaseModel):
     Represent the context of a job automation request
     """
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     platform: Modules
     bio: Bio | str | None = None
     categories: List[Category]

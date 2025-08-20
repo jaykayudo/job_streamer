@@ -1,5 +1,5 @@
 from typing import List
-from automation.core.automator.types import JobApplicationDetails, JobDetails
+from automation.core.automator.types import Category, JobApplicationDetails, JobDetails
 from utils.context import AutomationRequestContext
 from data_handler.extraction.resume_data_parser import ResumeDataParser
 from storage.core.models import Bio, Resume
@@ -122,13 +122,13 @@ class PromptGenerator:
     @classmethod
     def generate_prompt_for_choosing_job_category(
         cls,
+        job_categories: List[Category],
         automation_request_context: AutomationRequestContext,
     ) -> str:
         """
         Generate prompts for the job category selection.
         """
-        context_jsonified = automation_request_context.model_dump()
-        categories = context_jsonified["categories"]
+        categories = list(map(lambda x: x.model_dump(), job_categories))
         resume_data = cls._get_resume_data(automation_request_context.resume)
         bio = cls._get_bio_data(automation_request_context.bio)
 
