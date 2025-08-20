@@ -53,7 +53,7 @@ class PromptGenerator:
         cls,
         job_details: List[JobDetails],
         automation_request_context: AutomationRequestContext,
-    ) -> str:
+    ) -> dict:
         """
         Generate prompts for the job filtering.
         """
@@ -105,8 +105,7 @@ class PromptGenerator:
                 Here is the preferred work style of the user:
                 {work_style}
             """
-        prompt += """
-        
+        system_prompt = """
             You are a job filter expert.
             You need to filter the jobs based on the resume, the bio and the extra provided information.
             Score each job within the range of 0 to 10 based on how well it matches the user's resume, bio and extra provided information.
@@ -117,14 +116,14 @@ class PromptGenerator:
             You need to return in the format of [job_id1, job_id2, job_id3, ...]
             Return only the job ids as a json list. Do not return any other text.
         """
-        return prompt
+        return {"system": system_prompt, "user": prompt}
 
     @classmethod
     def generate_prompt_for_choosing_job_category(
         cls,
         job_categories: List[Category],
         automation_request_context: AutomationRequestContext,
-    ) -> str:
+    ) -> dict:
         """
         Generate prompts for the job category selection.
         """
@@ -147,6 +146,9 @@ class PromptGenerator:
             ```
             {bio}
             ```
+            
+        """
+        system_prompt = f"""
             You are a job category expert.
             Based on the provided information, return the most suitable job categories for the user.
             You need to return the job categories as a json list of ids.
@@ -154,14 +156,14 @@ class PromptGenerator:
             Return only the job category ids as a json list. Do not return any other text.
         """
 
-        return prompt
+        return {"system": system_prompt, "user": prompt}
 
     @classmethod
     def generate_prompt_for_answering_job_application_details(
         cls,
         job_application_details: List[JobApplicationDetails],
         automation_request_context: AutomationRequestContext,
-    ) -> str:
+    ) -> dict:
         """
         Generate prompts for the job application details.
         """
@@ -224,7 +226,7 @@ class PromptGenerator:
                 Here is the preferred work style of the user:
                 {work_style}
             """
-        prompt += f"""
+        system_prompt = f"""
             You are a job application expert.
             You need to answer the job application questions based on the user's data.
             Return the answers in the following format:
@@ -239,4 +241,4 @@ class PromptGenerator:
             ```
             Return only the answers as a json list. Do not return any other text.
         """
-        return prompt
+        return {"system": system_prompt, "user": prompt}
