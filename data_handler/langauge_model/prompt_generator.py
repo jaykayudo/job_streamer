@@ -2,6 +2,7 @@ from typing import List
 from automation.core.automator.types import JobDetails
 from utils.context import AutomationRequestContext
 from data_handler.extraction.resume_data_parser import ResumeDataParser
+from storage.core.models import Resume
 
 
 class PromptGenerator:
@@ -20,9 +21,7 @@ class PromptGenerator:
         """
         job_details_jsonified = list(map(lambda x: x.model_dump(), job_details))
         context_jsonified = automation_request_context.model_dump()
-        resume = context_jsonified["resume"]["file_path"]
-        parsed_resume = ResumeDataParser(resume)
-        resume_data = parsed_resume.get_extracted_data()
+        resume_data = cls._get_resume_data(automation_request_context.resume)
         bio = context_jsonified["bio"]
         if isinstance(bio, dict):
             bio = bio["bio"]
@@ -82,4 +81,52 @@ class PromptGenerator:
             You need to return in the format of [job_id1, job_id2, job_id3, ...]
             Return only the job ids as a json list. Do not return any other text.
         """
+        return prompt
+
+    @classmethod
+    def _get_resume_data(cls, resume: Resume) -> str:
+        """
+        Get the resume data from the resume file.
+        """
+        file_path = resume.path
+        parsed_resume = ResumeDataParser(file_path)
+        return parsed_resume.get_extracted_data()
+
+    @classmethod
+    def generate_prompt_for_choosing_job_category(
+        cls,
+        automation_request_context: AutomationRequestContext,
+    ) -> str:
+        """
+        Generate prompts for the job category selection.
+        """
+        context_jsonified = automation_request_context.model_dump()
+        categories = context_jsonified["categories"]
+        resume_data = cls._get_resume_data(automation_request_context.resume)
+        bio = context_jsonified["bio"]
+        if isinstance(bio, dict):
+            bio = bio["bio"]
+
+        prompt = f"""
+            This is a prompt to choose the job category for the user based on the user's data.
+            Here are the categories in json format:
+            {categories}
+            
+            Here is the resume data of the user 
+            (it may contain inconsistencies so smartly analyze it):
+            RESUME
+            ```
+            {resume_data}
+            ```
+            Here is the users bio to help you understand the user's skill:
+            ```
+            {bio}
+            ```
+            You are a job category expert.
+            Based on the provided information, return the most suitable job categories for the user.
+            You need to return the job categories as a json list of ids.
+            You need to return in the format of [id1, id2, id3, ...]
+            Return only the job category ids as a json list. Do not return any other text.
+        """
+
         return prompt
