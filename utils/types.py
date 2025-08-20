@@ -37,3 +37,6 @@ class SalaryRange(BaseModel):
 
     min: int
     max: int
+
+    def __str__(self):
+        return f"{self.min} - {self.max}"

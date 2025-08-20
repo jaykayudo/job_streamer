@@ -44,6 +44,9 @@ class Job(BaseModel):
     location: Optional[str] = None
     platform: Modules
 
+    def __str__(self):
+        return self.title
+
 
 class JobDetails(BaseModel):
     """
@@ -57,6 +60,9 @@ class JobDetails(BaseModel):
     company_description: Optional[str] = None
     posted_date: Optional[str] = None
 
+    def __str__(self):
+        return self.job.title
+
 
 class JobFilter(BaseModel):
     """
@@ -65,6 +71,9 @@ class JobFilter(BaseModel):
 
     id: Optional[str] = None
     name: str
+
+    def __str__(self):
+        return self.name
 
 
 class JobApplicationDetails(BaseModelWithUniqueId):
@@ -76,6 +85,9 @@ class JobApplicationDetails(BaseModelWithUniqueId):
     extra_description: Optional[str] = None
     element_type: InputElementType
 
+    def __str__(self):
+        return self.title
+
 
 class JobApplicationDetailsAnswer(BaseModelWithUniqueId):
     """
@@ -84,6 +96,9 @@ class JobApplicationDetailsAnswer(BaseModelWithUniqueId):
 
     application_details: JobApplicationDetails
     value: str
+
+    def __str__(self):
+        return self.application_details.title
 
 
 class HiringType(BaseModelWithUniqueId):
@@ -94,6 +109,9 @@ class HiringType(BaseModelWithUniqueId):
     id: Optional[str] = None
     name: str
 
+    def __str__(self):
+        return self.name
+
 
 class Industry(BaseModelWithUniqueId):
     """
@@ -102,6 +120,9 @@ class Industry(BaseModelWithUniqueId):
 
     id: Optional[str] = None
     name: str
+
+    def __str__(self):
+        return self.name
 
 
 class Skill(BaseModelWithUniqueId):
@@ -112,6 +133,9 @@ class Skill(BaseModelWithUniqueId):
     id: Optional[str] = None
     name: str
 
+    def __str__(self):
+        return self.name
+
 
 class Location(BaseModelWithUniqueId):
     """
@@ -121,6 +145,9 @@ class Location(BaseModelWithUniqueId):
     id: Optional[str] = None
     name: str
 
+    def __str__(self):
+        return self.name
+
 
 class Category(BaseModelWithUniqueId):
     """
@@ -129,3 +156,6 @@ class Category(BaseModelWithUniqueId):
 
     id: Optional[str] = None
     name: str
+
+    def __str__(self):
+        return self.name
