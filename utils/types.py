@@ -40,3 +40,14 @@ class SalaryRange(BaseModel):
 
     def __str__(self):
         return f"{self.min} - {self.max}"
+
+
+class MessageType(Enum):
+    """
+    Represent the type of message to the client
+    """
+
+    INFO = "info"
+    ERROR = "error"
+    SUCCESS = "success"
+    WARNING = "warning"
