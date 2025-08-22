@@ -9,14 +9,21 @@ class BaseInteractor(ABC):
     """
 
     @abstractmethod
-    def writer(self, message_type: MessageType, message: str):
+    def writer(
+        self, message_type: MessageType, message: str, extra_context: dict | None = None
+    ):
         """
         Write a message to the client.
         """
         pass
 
     @abstractmethod
-    def reader(self, prompt: str, multiline: bool = False) -> str:
+    def reader(
+        self,
+        prompt: str,
+        multiline: bool = False,
+        extra_context: dict | None = None,
+    ) -> str:
         """
         Read a message from the client.
         """
