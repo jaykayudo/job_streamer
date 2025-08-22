@@ -52,6 +52,7 @@ class MessageType(Enum):
     SUCCESS = "success"
     WARNING = "warning"
 
+
 class MessageTitle(Enum):
     """
     Represent the title of a message in an interactor
