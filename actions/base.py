@@ -1,6 +1,10 @@
 from abc import ABC, abstractmethod
 from client.base.interactor import BaseInteractor
 from typing import List
+from utils.logging import JobStreamerLogger
+from utils.types import MessageType
+
+logger = JobStreamerLogger().get_logger()
 
 
 class BaseAction(ABC):
@@ -13,14 +17,7 @@ class BaseAction(ABC):
 
     def __init__(self, interactor: BaseInteractor):
         self.interactor = interactor
-
-    @abstractmethod
-    def handle_action_command(self, command: str):
-        """
-        The is the main methos that all action class should implement.
-        it collects the command from the user input and perform an action based on the command.
-        """
-        pass
+        self.actions = {}
 
     @classmethod
     @abstractmethod
@@ -29,3 +26,14 @@ class BaseAction(ABC):
         Get the actions of the action class.
         """
         pass
+
+    def handle_action_command(self, command: str):
+        """
+        The is the main method that is the entry point for all actions.
+        It collects the command from the user input and perform an action based on the command.
+        """
+        if command.lower() in self.actions:
+            self.actions[command.lower()]()
+        else:
+            logger.error(f"Invalid command: {command}")
+            self.interactor.writer(MessageType.ERROR, "Invalid command")

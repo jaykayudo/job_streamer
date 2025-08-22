@@ -31,16 +31,6 @@ class ApplicationActions(BaseAction):
         """
         return ["list", "get", "delete"]
 
-    def handle_action_command(self, command: str):
-        """
-        Handle the action command.
-        """
-        if command.lower() in self.actions:
-            self.actions[command.lower()]()
-        else:
-            logger.error(f"Invalid command: {command}")
-            self.interactor.writer(MessageType.ERROR, "Invalid command")
-
     def list_applications(self):
         """
         List all applications.
