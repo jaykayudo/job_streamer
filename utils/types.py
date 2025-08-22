@@ -61,4 +61,5 @@ class MessageTitle(Enum):
     RESUME_LIST = "resume_list"
     BIO_LIST = "bio_list"
     JOB_LIST = "job_list"
+    PROJECT_LIST = "project_list"
     JOB_APPLICATION_LIST = "job_application_list"

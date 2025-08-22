@@ -2,8 +2,11 @@ from actions.base import BaseAction
 from client.base.interactor import BaseInteractor
 from utils.types import MessageType
 from services.database.resume import ResumeService
+from utils.logging import JobStreamerLogger
 from utils.types import MessageTitle
 from tabulate import tabulate
+
+logger = JobStreamerLogger().get_logger()
 
 
 class ResumeActions(BaseAction):
@@ -23,6 +26,7 @@ class ResumeActions(BaseAction):
         if command in self.actions:
             self.actions[command]()
         else:
+            logger.error(f"Invalid command: {command}")
             self.interactor.writer(MessageType.ERROR, "Invalid command")
 
     def create_resume(self):
@@ -39,7 +43,12 @@ class ResumeActions(BaseAction):
             "Please provide the path of the resume",
         )
         file_path = self.interactor.reader(prompt="Enter the path of the resume")
-        resume = ResumeService.create_resume(name=name, file_path=file_path)
+        try:
+            resume = ResumeService.create_resume(name=name, file_path=file_path)
+        except Exception as e:
+            logger.error(f"Error creating resume: {e}")
+            self.interactor.writer(MessageType.ERROR, f"Error creating resume: {e}")
+            return
         self.interactor.writer(
             MessageType.SUCCESS, f"Resume created successfully: {resume.name}"
         )
@@ -60,6 +69,7 @@ class ResumeActions(BaseAction):
                 MessageType.SUCCESS, f"Resume deleted successfully: {name}"
             )
         except Exception as e:
+            logger.error(f"Error deleting resume: {e}")
             self.interactor.writer(MessageType.ERROR, f"Error deleting resume: {e}")
 
     def list_resumes(self):

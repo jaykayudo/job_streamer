@@ -2,11 +2,14 @@ from actions.base import BaseAction
 from client.base.interactor import BaseInteractor
 from utils.types import MessageType
 from services.database.bio import BioService
-from utils.logging import logger
+from utils.logging import JobStreamerLogger
 from tabulate import tabulate
 from utils.types import MessageTitle
 from storage.core.models import Bio
 from typing import Any
+
+
+logger = JobStreamerLogger().get_logger()
 
 
 class BioActions(BaseAction):
@@ -69,9 +72,11 @@ class BioActions(BaseAction):
         """
         self.interactor.writer(MessageType.INFO, "Listing all the bios...")
         bios = BioService.get_bios()
-        
-        bios_dumped = [self._filter_out_projects_and_work_experiences(bio) for bio in bios]
-        
+
+        bios_dumped = [
+            self._filter_out_projects_and_work_experiences(bio) for bio in bios
+        ]
+
         tabulated_data = tabulate(bios_dumped, headers="keys", tablefmt="grid")
         self.interactor.writer(
             MessageType.INFO,
@@ -79,8 +84,10 @@ class BioActions(BaseAction):
             title=MessageTitle.BIO_LIST,
             extra_context=bios_dumped,
         )
-        
-    def _filter_out_projects_and_work_experiences(self, bio: Bio) -> list[dict[str, Any]]:
+
+    def _filter_out_projects_and_work_experiences(
+        self, bio: Bio
+    ) -> list[dict[str, Any]]:
         """
         Filter out the projects and work experiences of a bio.
         This is done to avoid the message being too large.
@@ -89,7 +96,7 @@ class BioActions(BaseAction):
         bio_dumped.pop("projects")
         bio_dumped.pop("work_experiences")
         return bio_dumped
-    
+
     def get_bio(self):
         """
         Get a bio.
@@ -99,9 +106,15 @@ class BioActions(BaseAction):
         try:
             bio = BioService.get_bio(name=name)
             json_dumped_projects = [project.json_dump() for project in bio.projects]
-            tabulated_projects = tabulate(json_dumped_projects, headers="keys", tablefmt="grid")
-            json_dumped_work_experiences = [work_experience.json_dump() for work_experience in bio.work_experiences]
-            tabulated_work_experiences = tabulate(json_dumped_work_experiences, headers="keys", tablefmt="grid")
+            tabulated_projects = tabulate(
+                json_dumped_projects, headers="keys", tablefmt="grid"
+            )
+            json_dumped_work_experiences = [
+                work_experience.json_dump() for work_experience in bio.work_experiences
+            ]
+            tabulated_work_experiences = tabulate(
+                json_dumped_work_experiences, headers="keys", tablefmt="grid"
+            )
             full_message = f"""
             Name: {bio.name}
             Bio: {bio.bio}
@@ -111,9 +124,12 @@ class BioActions(BaseAction):
             {tabulated_work_experiences}
             ================================================
             """
-            self.interactor.writer(MessageType.INFO, full_message, title=MessageTitle.BIO_LIST, extra_context=bio.json_dump())
+            self.interactor.writer(
+                MessageType.INFO,
+                full_message,
+                title=MessageTitle.BIO_LIST,
+                extra_context=bio.json_dump(),
+            )
         except Exception as e:
             logger.error(f"Error getting bio: {e}")
             self.interactor.writer(MessageType.ERROR, f"Error getting bio: {e}")
-
-    
