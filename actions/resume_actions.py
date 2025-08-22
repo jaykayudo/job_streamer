@@ -2,6 +2,8 @@ from actions.base import BaseAction
 from client.base.interactor import BaseInteractor
 from utils.types import MessageType
 from services.database.resume import ResumeService
+from utils.types import MessageTitle
+from tabulate import tabulate
 
 
 class ResumeActions(BaseAction):
@@ -33,7 +35,8 @@ class ResumeActions(BaseAction):
         )
         name = self.interactor.reader(prompt="Enter the name of the resume")
         self.interactor.writer(
-            MessageType.INFO, "Please provide the path of the resume"
+            MessageType.INFO,
+            "Please provide the path of the resume",
         )
         file_path = self.interactor.reader(prompt="Enter the path of the resume")
         resume = ResumeService.create_resume(name=name, file_path=file_path)
@@ -47,7 +50,8 @@ class ResumeActions(BaseAction):
         """
         self.interactor.writer(MessageType.INFO, "Deleting a resume...")
         self.interactor.writer(
-            MessageType.INFO, "Please provide the name of the resume"
+            MessageType.INFO,
+            "Please provide the name of the resume",
         )
         name = self.interactor.reader(prompt="Enter the name of the resume")
         try:
@@ -64,7 +68,11 @@ class ResumeActions(BaseAction):
         """
         resumes = ResumeService.get_resumes()
         self.interactor.writer(MessageType.INFO, "Listing all resumes...")
-        for resume in resumes:
-            self.interactor.writer(
-                MessageType.INFO, f"Resume: {resume.name} - {resume.path}"
-            )
+        resumes_dumped = [resume.json_dump() for resume in resumes]
+        tabulated_data = tabulate(resumes_dumped, headers="keys", tablefmt="grid")
+        self.interactor.writer(
+            MessageType.INFO,
+            tabulated_data,
+            title=MessageTitle.RESUME_LIST,
+            extra_context=resumes_dumped,
+        )
