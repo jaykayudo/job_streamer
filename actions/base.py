@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from client.base.interactor import BaseInteractor
+from typing import List
 
 
 class BaseAction(ABC):
@@ -18,5 +19,13 @@ class BaseAction(ABC):
         """
         The is the main methos that all action class should implement.
         it collects the command from the user input and perform an action based on the command.
+        """
+        pass
+
+    @classmethod
+    @abstractmethod
+    def get_actions(cls) -> List[str]:
+        """
+        Get the actions of the action class.
         """
         pass
