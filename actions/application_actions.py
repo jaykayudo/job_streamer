@@ -6,7 +6,7 @@ from utils.logging import JobStreamerLogger
 from tabulate import tabulate
 from utils.types import MessageTitle
 from storage.core.models import Application
-from typing import Any
+from typing import Any, List
 from utils.validation import is_valid_option_index_based
 from services.database.bio import BioService
 
@@ -24,13 +24,21 @@ class ApplicationActions(BaseAction):
             "get": self.get_application,
         }
 
+    @classmethod
+    def get_actions(cls) -> List[str]:
+        """
+        Get the actions of the action class.
+        """
+        return ["list", "get", "delete"]
+
     def handle_action_command(self, command: str):
         """
         Handle the action command.
         """
-        if command in self.actions:
-            self.actions[command]()
+        if command.lower() in self.actions:
+            self.actions[command.lower()]()
         else:
+            logger.error(f"Invalid command: {command}")
             self.interactor.writer(MessageType.ERROR, "Invalid command")
 
     def list_applications(self):
