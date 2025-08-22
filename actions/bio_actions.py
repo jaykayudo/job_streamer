@@ -6,7 +6,7 @@ from utils.logging import JobStreamerLogger
 from tabulate import tabulate
 from utils.types import MessageTitle
 from storage.core.models import Bio
-from typing import Any
+from typing import Any, List
 
 
 logger = JobStreamerLogger().get_logger()
@@ -23,13 +23,21 @@ class BioActions(BaseAction):
             "get": self.get_bio,
         }
 
+    @classmethod
+    def get_actions(cls) -> List[str]:
+        """
+        Get the actions of the bio action class.
+        """
+        return ["create", "list", "get", "delete"]
+
     def handle_action_command(self, command: str):
         """
         Handle the action command.
         """
-        if command in self.actions:
-            self.actions[command]()
+        if command.lower() in self.actions:
+            self.actions[command.lower()]()
         else:
+            logger.error(f"Invalid command: {command}")
             self.interactor.writer(MessageType.ERROR, "Invalid command")
 
     def create_bio(self):
