@@ -5,6 +5,7 @@ from services.database.resume import ResumeService
 from utils.logging import JobStreamerLogger
 from utils.types import MessageTitle
 from tabulate import tabulate
+from typing import List
 
 logger = JobStreamerLogger().get_logger()
 
@@ -19,12 +20,19 @@ class ResumeActions(BaseAction):
             "list": self.list_resumes,
         }
 
+    @classmethod
+    def get_actions(cls) -> List[str]:
+        """
+        Get the actions of the resume action class.
+        """
+        return ["create", "list", "delete"]
+
     def handle_action_command(self, command: str):
         """
         Handle the action command.
         """
-        if command in self.actions:
-            self.actions[command]()
+        if command.lower() in self.actions:
+            self.actions[command.lower()]()
         else:
             logger.error(f"Invalid command: {command}")
             self.interactor.writer(MessageType.ERROR, "Invalid command")
