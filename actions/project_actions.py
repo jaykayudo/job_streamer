@@ -48,11 +48,17 @@ class ProjectActions(BaseAction):
         """
         self.interactor.writer(MessageType.INFO, "Creating a new project...")
         bios = BioService.get_bios()
+        bios_dumped = [bio.json_dump() for bio in bios]
         bios_string = "\n".join(
             [f"{idx + 1}. {bio.name}" for idx, bio in enumerate(bios)]
         )
-        self.interactor.writer(MessageType.INFO, f"Please select a bio:\n{bios_string}")
-        bio_index = self.interactor.reader(prompt="Enter the index of the bio")
+        self.interactor.writer(
+            MessageType.INFO,
+            f"Please select a bio:\n{bios_string}",
+            title=MessageTitle.BIO_LIST,
+            extra_context=bios_dumped,
+        )
+        bio_index = self.interactor.reader(prompt="Enter the number of the bio")
         if not is_valid_option_index_based(bio_index, bios):
             self.interactor.writer(MessageType.ERROR, "Invalid option")
             return
