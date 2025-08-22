@@ -10,10 +10,18 @@ class BaseInteractor(ABC):
 
     @abstractmethod
     def writer(
-        self, message_type: MessageType, message: str, extra_context: dict | None = None
+        self, message_type: MessageType, message: str, title: str | None = None, extra_context: dict | list | None = None
     ):
         """
         Write a message to the client.
+        Args:
+            message_type: The type of message to write
+            message: The message to write
+            title: The title of the message 
+            (this idea behind this title is that other interactors can use 
+            this title to display the message based on the extra context if provided)
+            extra_context: Extra context to write  with the message:
+            (this is used to display the message based on the extra context if provided)
         """
         pass
 

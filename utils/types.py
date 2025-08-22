@@ -51,3 +51,19 @@ class MessageType(Enum):
     ERROR = "error"
     SUCCESS = "success"
     WARNING = "warning"
+
+class MessageTitle(Enum):
+    """
+    Represent the title of a message in an interactor
+    """
+
+    RESUME_LIST = "resume_list"
+    RESUME_CREATE = "resume_create"
+    RESUME_DELETE = "resume_delete"
+    BIO_LIST = "bio_list"
+    BIO_CREATE = "bio_create"
+    BIO_DELETE = "bio_delete"
+    JOB_LIST = "job_list"
+    JOB_CREATE = "job_create"
+    JOB_DELETE = "job_delete"
+    JOB_APPLICATION_LIST = "job_application_list"
