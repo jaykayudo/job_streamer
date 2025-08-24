@@ -35,6 +35,8 @@ class PromptGenerator:
                 {
                     "id": question["id"],
                     "question": question["title"],
+                    "is_required": question["is_required"],
+                    "options": question["options"],
                 }
             )
         return return_questions
