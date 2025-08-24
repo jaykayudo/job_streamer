@@ -1,6 +1,6 @@
 from enum import Enum
 from pydantic import BaseModel
-from typing import Literal, Optional
+from typing import Literal, Optional, List
 
 from conf.settings import Modules
 
@@ -84,6 +84,8 @@ class JobApplicationDetails(BaseModelWithUniqueId):
     title: str
     extra_description: Optional[str] = None
     element_type: InputElementType
+    is_required: bool = False
+    options: Optional[List[str]] = None
 
     def __str__(self):
         return self.title
