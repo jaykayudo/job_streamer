@@ -35,6 +35,8 @@ class PromptGenerator:
                 {
                     "id": question["id"],
                     "question": question["title"],
+                    "is_required": question["is_required"],
+                    "options": question["options"],
                 }
             )
         return return_questions
@@ -182,6 +184,8 @@ class PromptGenerator:
                 {{
                     "id": "question_id",
                     "question": "question_text",
+                    "is_required": true/false,
+                    "options": ["option1", "option2", "option3", ...] / none
                 }},
                 ...
             ]
@@ -239,6 +243,10 @@ class PromptGenerator:
                 ...
             ]
             ```
+            If the question is not required, you can return an empty string for the answer.
+            If the question has options, smartly analyze the user's data and return the most suitable option.
+            If the question has no options, you need to generate the answer based on the user's data.
+            If the question is required, you need to return the answer.
             Return only the answers as a json list. Do not return any other text.
         """
         return {"system": system_prompt, "user": prompt}
