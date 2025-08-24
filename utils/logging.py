@@ -27,6 +27,15 @@ class JobStreamerLogger:
         log_file_path = os.path.join(
             SETTINGS.LOGS_DIR, f"job-streamer-{current_date}.log"
         )
+        logger.remove()
+        logger.add(
+            sink=lambda msg: print(msg["message"]),
+            level="INFO",
+            format="{time}| {level}| {name} - {message}",
+            backtrace=False,
+            diagnose=False,
+            enqueue=True,
+        )
         logger.add(
             log_file_path,
             level="INFO",
