@@ -33,6 +33,6 @@ class BioService:
         """
         Delete a bio from the database
         """
-        bio = session.get(Bio, {"name": name})
+        bio = session.query(Bio).filter_by(name=name).first()
         if bio:
             bio.delete()

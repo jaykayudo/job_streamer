@@ -29,7 +29,7 @@ class JobStreamerLogger:
         )
         logger.remove()
         logger.add(
-            sink=lambda msg: print(msg["message"]),
+            sys.stdout,
             level="INFO",
             format="{time}| {level}| {name} - {message}",
             backtrace=False,
