@@ -77,10 +77,10 @@ class Bio(BaseModel):
             **super().json_dump(),
             "name": self.name,
             "bio": self.bio,
-            "projects": [project.json_dump() for project in self.projects],
-            "work_experiences": [
-                work_experience.json_dump() for work_experience in self.work_experiences
-            ],
+            # "projects": [project.json_dump() for project in self.projects], # removing all this due to recursive dump
+            # "work_experiences": [
+            #     work_experience.json_dump() for work_experience in self.work_experiences
+            # ],
         }
 
 

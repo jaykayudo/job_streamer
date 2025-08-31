@@ -16,7 +16,7 @@ SETTINGS = Settings()
 
 
 # Create database engine
-engine = create_engine(SETTINGS.DATABASE_URL, echo=True)
+engine = create_engine(SETTINGS.DATABASE_URL, echo=False)
 
 # Create a Session factory
 SessionLocal = sessionmaker(bind=engine)
