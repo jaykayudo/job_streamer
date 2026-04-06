@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Job Streamer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f1117;
+      --surface:   #1a1d27;
+      --surface2:  #22263a;
+      --border:    #2e3348;
+      --accent:    #4f8ef7;
+      --accent-dim:#2d5bbf;
+      --success:   #3ecf8e;
+      --error:     #f76f6f;
+      --warning:   #f7c948;
+      --text:      #d4d8f0;
+      --text-muted:#6b7394;
+      --radius:    8px;
+      --sidebar-w: 200px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 14px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    header h1 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: .5px;
+    }
+    #ws-status {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    #ws-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--error);
+      transition: background .3s;
+    }
+    #ws-dot.connected { background: var(--success); }
+
+    /* ── Layout ── */
+    .layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    aside {
+      width: var(--sidebar-w);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+    .sidebar-label {
+      padding: 14px 16px 8px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+    }
+    .tab-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 10px 16px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 13px;
+      cursor: pointer;
+      text-align: left;
+      border-left: 3px solid transparent;
+      transition: color .15s, background .15s, border-color .15s;
+      text-transform: capitalize;
+    }
+    .tab-btn:hover { background: var(--surface2); color: var(--text); }
+    .tab-btn.active {
+      color: var(--accent);
+      border-left-color: var(--accent);
+      background: var(--surface2);
+    }
+    .tab-icon { font-size: 15px; width: 18px; text-align: center; }
+
+    /* ── Main ── */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      padding: 20px;
+      gap: 16px;
+    }
+
+    /* ── Command panel ── */
+    .command-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .command-panel .field { display: flex; flex-direction: column; gap: 6px; }
+    .command-panel label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .8px; }
+    #group-display {
+      padding: 8px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 14px;
+      min-width: 120px;
+      text-transform: capitalize;
+    }
+    #subcommand-select {
+      padding: 8px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 14px;
+      min-width: 160px;
+      cursor: pointer;
+      outline: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b7394'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 32px;
+    }
+    #subcommand-select:focus { border-color: var(--accent); }
+    #proceed-btn {
+      padding: 9px 22px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s, opacity .15s;
+      white-space: nowrap;
+    }
+    #proceed-btn:hover { background: var(--accent-dim); }
+    #proceed-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+    /* ── Output ── */
+    .output-wrap {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .output-header {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #clear-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 12px;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    #clear-btn:hover { color: var(--text); background: var(--surface2); }
+    #output {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    #output::-webkit-scrollbar { width: 6px; }
+    #output::-webkit-scrollbar-track { background: transparent; }
+    #output::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    .msg { display: flex; gap: 8px; }
+    .msg-icon { flex-shrink: 0; margin-top: 1px; }
+    .msg-text { white-space: pre-wrap; word-break: break-word; }
+    .msg.info    .msg-text { color: var(--text); }
+    .msg.success .msg-text { color: var(--success); }
+    .msg.error   .msg-text { color: var(--error); }
+    .msg.warning .msg-text { color: var(--warning); }
+    .msg.system  .msg-text { color: var(--text-muted); font-style: italic; }
+    .msg.sent    .msg-text { color: var(--accent); }
+    .msg.prompt  .msg-text { color: var(--warning); font-weight: 600; }
+
+    /* ── Input row (shown when server asks for input) ── */
+    #input-row {
+      display: none;
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      gap: 8px;
+      align-items: center;
+      background: var(--surface2);
+    }
+    #input-row.visible { display: flex; }
+    #user-input {
+      flex: 1;
+      padding: 8px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+    }
+    #user-input:focus { border-color: var(--accent); }
+    #send-btn {
+      padding: 8px 18px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    #send-btn:hover { background: var(--accent-dim); }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>⚡ Job Streamer</h1>
+  <div id="ws-status">
+    <span id="ws-dot"></span>
+    <span id="ws-label">Disconnected</span>
+  </div>
+</header>
+
+<div class="layout">
+  <aside>
+    <div class="sidebar-label">Commands</div>
+    {% set icons = {
+        "bio": "👤", "resume": "📄", "application": "📋",
+        "preference": "⚙️", "project": "🗂️",
+        "work_experience": "💼", "help": "❓"
+    } %}
+    {% for group, subactions in commands.items() %}
+    <button
+      class="tab-btn {% if loop.first %}active{% endif %}"
+      data-group="{{ group }}"
+      data-subactions="{{ subactions | join(',') }}"
+      onclick="selectGroup(this)"
+    >
+      <span class="tab-icon">{{ icons.get(group, '▸') }}</span>
+      {{ group.replace('_', ' ') }}
+    </button>
+    {% endfor %}
+  </aside>
+
+  <main>
+    <div class="command-panel">
+      <div class="field">
+        <label>Command</label>
+        <div id="group-display">—</div>
+      </div>
+      <div class="field">
+        <label>Subcommand</label>
+        <select id="subcommand-select"></select>
+      </div>
+      <button id="proceed-btn" onclick="proceed()" disabled>Proceed</button>
+    </div>
+
+    <div class="output-wrap">
+      <div class="output-header">
+        <span>Output</span>
+        <button id="clear-btn" onclick="clearOutput()">Clear</button>
+      </div>
+      <div id="output"></div>
+      <div id="input-row">
+        <input id="user-input" type="text" placeholder="Type your answer…" autocomplete="off" />
+        <button id="send-btn" onclick="sendInput()">Send</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  const WS_URL = "{{ ws_url }}";
+
+  // ── State ──────────────────────────────────────────────────────────
+  let ws = null;
+  let currentGroup = null;
+  let awaitingInput = false;
+
+  // ── WebSocket ──────────────────────────────────────────────────────
+  function connect() {
+    ws = new WebSocket(WS_URL);
+
+    ws.onopen = () => {
+      setStatus(true);
+      addMessage("system", "Connected to Job Streamer server.");
+      document.getElementById("proceed-btn").disabled = false;
+    };
+
+    ws.onclose = () => {
+      setStatus(false);
+      addMessage("system", "Disconnected. Reconnecting in 3s…");
+      document.getElementById("proceed-btn").disabled = true;
+      setTimeout(connect, 3000);
+    };
+
+    ws.onerror = () => {
+      addMessage("error", "WebSocket error.");
+    };
+
+    ws.onmessage = (e) => {
+      const data = JSON.parse(e.data);
+      handleMessage(data);
+    };
+  }
+
+  function handleMessage(data) {
+    if (data.type === "output") {
+      addMessage(data.message_type || "info", data.message);
+    } else if (data.type === "prompt") {
+      addMessage("prompt", `▸ ${data.message}`);
+      showInputRow(true);
+    } else if (data.type === "done") {
+      addMessage("system", "✓ Command completed.");
+      showInputRow(false);
+      document.getElementById("proceed-btn").disabled = false;
+    } else if (data.type === "error") {
+      addMessage("error", `✗ ${data.message}`);
+      showInputRow(false);
+      document.getElementById("proceed-btn").disabled = false;
+    }
+  }
+
+  // ── UI helpers ─────────────────────────────────────────────────────
+  function setStatus(connected) {
+    document.getElementById("ws-dot").className = connected ? "connected" : "";
+    document.getElementById("ws-label").textContent = connected ? "Connected" : "Disconnected";
+  }
+
+  function addMessage(type, text) {
+    const icons = { info: "›", success: "✓", error: "✗", warning: "⚠", system: "·", sent: "»", prompt: "?" };
+    const el = document.createElement("div");
+    el.className = `msg ${type}`;
+    el.innerHTML = `<span class="msg-icon">${icons[type] || "›"}</span><span class="msg-text">${escHtml(text)}</span>`;
+    const out = document.getElementById("output");
+    out.appendChild(el);
+    out.scrollTop = out.scrollHeight;
+  }
+
+  function escHtml(t) {
+    return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  function clearOutput() {
+    document.getElementById("output").innerHTML = "";
+  }
+
+  function showInputRow(visible) {
+    awaitingInput = visible;
+    const row = document.getElementById("input-row");
+    row.classList.toggle("visible", visible);
+    if (visible) {
+      document.getElementById("user-input").focus();
+    }
+  }
+
+  // ── Tab selection ──────────────────────────────────────────────────
+  function selectGroup(btn) {
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+
+    currentGroup = btn.dataset.group;
+    document.getElementById("group-display").textContent = currentGroup.replace(/_/g, " ");
+
+    const subactions = btn.dataset.subactions ? btn.dataset.subactions.split(",") : [];
+    const sel = document.getElementById("subcommand-select");
+    sel.innerHTML = "";
+
+    if (subactions.length === 0) {
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "(no subcommand)";
+      sel.appendChild(opt);
+    } else {
+      subactions.forEach(s => {
+        const opt = document.createElement("option");
+        opt.value = s;
+        opt.textContent = s;
+        sel.appendChild(opt);
+      });
+    }
+  }
+
+  // ── Command dispatch ───────────────────────────────────────────────
+  function proceed() {
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      addMessage("error", "Not connected.");
+      return;
+    }
+    if (awaitingInput) {
+      addMessage("warning", "Waiting for your input first.");
+      return;
+    }
+
+    const subcommand = document.getElementById("subcommand-select").value;
+    addMessage("sent", `${currentGroup} ${subcommand}`.trim());
+    ws.send(JSON.stringify({ type: "command", group: currentGroup, subcommand }));
+    document.getElementById("proceed-btn").disabled = true;
+  }
+
+  function sendInput() {
+    const input = document.getElementById("user-input");
+    const value = input.value.trim();
+    if (!value) return;
+
+    addMessage("sent", value);
+    ws.send(JSON.stringify({ type: "input", value }));
+    input.value = "";
+    showInputRow(false);
+  }
+
+  // Enter key submits input
+  document.getElementById("user-input").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") sendInput();
+  });
+
+  // ── Boot ───────────────────────────────────────────────────────────
+  // Select first tab on load
+  const firstTab = document.querySelector(".tab-btn");
+  if (firstTab) selectGroup(firstTab);
+
+  connect();
+</script>
+</body>
+</html>
