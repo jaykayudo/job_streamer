@@ -34,6 +34,7 @@ class BioActions(BaseAction):
         """
         Create a new bio.
         """
+        logger.info("Creating a new bio...")
         self.interactor.writer(MessageType.INFO, "Creating a new bio...")
         self.interactor.writer(MessageType.INFO, "Please provide the name of the bio")
         name = self.interactor.reader(prompt="Enter the name of the bio")
@@ -44,6 +45,7 @@ class BioActions(BaseAction):
             self.interactor.writer(
                 MessageType.SUCCESS, f"Bio created successfully: {name}"
             )
+            logger.info(f"Bio created successfully: {name}")
         except Exception as e:
             logger.error(f"Error creating bio: {e}")
             self.interactor.writer(MessageType.ERROR, f"Error creating bio: {e}")
