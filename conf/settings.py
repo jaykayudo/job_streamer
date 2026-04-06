@@ -40,6 +40,10 @@ class Settings:
         )
         self.SE_REMOTE_URL = os.getenv("SE_REMOTE_URL", "http://localhost:4444/wd/hub")
         self.DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///example.db")
+        self.WS_HOST = os.getenv("WS_HOST", "localhost")
+        self.WS_PORT = int(os.getenv("WS_PORT", 8765))
+        self.WEB_HOST = os.getenv("WEB_HOST", "0.0.0.0")
+        self.WEB_PORT = int(os.getenv("WEB_PORT", 5050))
 
     def _path_settings(self):
         """
