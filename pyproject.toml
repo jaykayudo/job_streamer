@@ -24,7 +24,7 @@ dependencies = [
 
 
 [project.scripts]
-job-streamer = "client.command_line.run:main"
+job-streamer-cli = "client.command_line.run:main"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
