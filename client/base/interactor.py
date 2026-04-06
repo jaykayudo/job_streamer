@@ -40,3 +40,9 @@ class BaseInteractor(ABC):
         Read a message from the client.
         """
         pass
+    
+    def log(self, message: str):
+        """
+        Log a message to the client.
+        """
+        pass

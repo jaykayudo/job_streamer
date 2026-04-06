@@ -28,7 +28,7 @@ class JobStreamerLogger:
             SETTINGS.LOGS_DIR, f"job-streamer-{current_date}.log"
         )
         logger.remove()
-        logger.add(
+        self._stdout_sink_id = logger.add(
             sys.stdout,
             level="INFO",
             format="{time}| {level}| {name} - {message}",
@@ -44,6 +44,16 @@ class JobStreamerLogger:
             enqueue=True,
         )
         return logger
+
+    def add_sink(self, sink, **kwargs) -> int:
+        """Add a custom sink and return its ID."""
+        return self.logger.add(sink, **kwargs)
+
+    def remove_stdout_sink(self):
+        """Remove the stdout sink (used when a TUI takes over output)."""
+        if hasattr(self, "_stdout_sink_id"):
+            self.logger.remove(self._stdout_sink_id)
+            self._stdout_sink_id = None
 
     def get_logger(self) -> logger:
         """
