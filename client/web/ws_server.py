@@ -11,12 +11,13 @@ Protocol (JSON messages):
     {"type": "prompt",  "message": "Enter the name:"}
     {"type": "done"}
     {"type": "error",   "message": "..."}
+    {"type": "log",     "level": "INFO|ERROR|WARNING", "message": "..."}
 """
 
 import asyncio
 import json
-import os
 import threading
+import weakref
 
 from websockets.asyncio.server import ServerConnection, serve
 
@@ -31,6 +32,32 @@ logger = JobStreamerLogger().get_logger()
 
 WS_HOST = SETTINGS.WS_HOST
 WS_PORT = SETTINGS.WS_PORT
+
+# All active connections — used by the log sink to broadcast to every client.
+_clients: weakref.WeakSet[ServerConnection] = weakref.WeakSet()
+_server_loop: asyncio.AbstractEventLoop | None = None
+_log_sink_id: int | None = None
+
+
+def _broadcast_log(message):
+    """Loguru sink: sends every log record to all connected browser clients."""
+    if _server_loop is None or not _clients:
+        return
+    record = message.record
+    level = record["level"].name
+    text = record["message"]
+    payload = json.dumps({"type": "log", "level": level, "message": text})
+
+    async def _send_all():
+        for client in list(_clients):
+            try:
+                await client.send(payload)
+            except Exception:
+                pass
+
+    _server_loop.call_soon_threadsafe(
+        lambda: asyncio.ensure_future(_send_all(), loop=_server_loop)
+    )
 
 
 class WebInteractor(BaseInteractor):
@@ -147,8 +174,10 @@ async def _run_command(
 # ------------------------------------------------------------------
 
 async def _handle(ws: ServerConnection):
+    global _clients
     loop = asyncio.get_running_loop()
     interactor = WebInteractor(ws, loop)
+    _clients.add(ws)
     logger.info(f"WS client connected: {ws.remote_address}")
 
     try:
@@ -187,6 +216,21 @@ async def _handle(ws: ServerConnection):
 # ------------------------------------------------------------------
 
 async def start_ws_server():
-    async with serve(_handle, WS_HOST, WS_PORT) as server:
-        logger.info(f"WebSocket server listening on ws://{WS_HOST}:{WS_PORT}")
-        await server.serve_forever()
+    global _server_loop, _log_sink_id
+    _server_loop = asyncio.get_running_loop()
+
+    js_logger = JobStreamerLogger()
+    _log_sink_id = js_logger.add_sink(
+        _broadcast_log,
+        level="DEBUG",
+        format="{time:HH:mm:ss} | {level:<7} | {name} - {message}",
+        enqueue=False,
+    )
+
+    try:
+        async with serve(_handle, WS_HOST, WS_PORT) as server:
+            logger.info(f"WebSocket server listening on ws://{WS_HOST}:{WS_PORT}")
+            await server.serve_forever()
+    finally:
+        if _log_sink_id is not None:
+            js_logger.logger.remove(_log_sink_id)
