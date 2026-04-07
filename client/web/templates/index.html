@@ -21,6 +21,7 @@
       --text-muted:#6b7394;
       --radius:    8px;
       --sidebar-w: 200px;
+      --log-h:     220px;
     }
 
     body {
@@ -44,12 +45,7 @@
       border-bottom: 1px solid var(--border);
       flex-shrink: 0;
     }
-    header h1 {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--accent);
-      letter-spacing: .5px;
-    }
+    header h1 { font-size: 16px; font-weight: 700; color: var(--accent); letter-spacing: .5px; }
     #ws-status {
       margin-left: auto;
       display: flex;
@@ -58,18 +54,21 @@
       font-size: 12px;
       color: var(--text-muted);
     }
-    #ws-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: var(--error);
-      transition: background .3s;
-    }
+    #ws-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--error); transition: background .3s; }
     #ws-dot.connected { background: var(--success); }
 
-    /* ── Layout ── */
-    .layout {
-      display: flex;
+    /* ── Body layout ── */
+    .body-wrap {
       flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Main row ── */
+    .layout {
+      flex: 1;
+      display: flex;
       overflow: hidden;
     }
 
@@ -107,11 +106,7 @@
       text-transform: capitalize;
     }
     .tab-btn:hover { background: var(--surface2); color: var(--text); }
-    .tab-btn.active {
-      color: var(--accent);
-      border-left-color: var(--accent);
-      background: var(--surface2);
-    }
+    .tab-btn.active { color: var(--accent); border-left-color: var(--accent); background: var(--surface2); }
     .tab-icon { font-size: 15px; width: 18px; text-align: center; }
 
     /* ── Main ── */
@@ -200,7 +195,7 @@
       justify-content: space-between;
       align-items: center;
     }
-    #clear-btn {
+    .hdr-btn {
       background: none;
       border: none;
       color: var(--text-muted);
@@ -209,7 +204,7 @@
       padding: 2px 6px;
       border-radius: 4px;
     }
-    #clear-btn:hover { color: var(--text); background: var(--surface2); }
+    .hdr-btn:hover { color: var(--text); background: var(--surface2); }
     #output {
       flex: 1;
       overflow-y: auto;
@@ -236,7 +231,7 @@
     .msg.sent    .msg-text { color: var(--accent); }
     .msg.prompt  .msg-text { color: var(--warning); font-weight: 600; }
 
-    /* ── Input row (shown when server asks for input) ── */
+    /* ── Input row ── */
     #input-row {
       display: none;
       padding: 12px 16px;
@@ -269,6 +264,132 @@
       cursor: pointer;
     }
     #send-btn:hover { background: var(--accent-dim); }
+
+    /* ── Log drawer ── */
+    #log-drawer {
+      flex-shrink: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      height: 32px;          /* collapsed: just the header bar */
+      transition: height .2s ease;
+      overflow: hidden;
+    }
+    #log-drawer.open { height: var(--log-h); }
+
+    #log-drawer-header {
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      height: 32px;
+      flex-shrink: 0;
+      cursor: pointer;
+      user-select: none;
+      gap: 8px;
+      border-bottom: 1px solid transparent;
+    }
+    #log-drawer.open #log-drawer-header { border-bottom-color: var(--border); }
+    #log-chevron {
+      font-size: 11px;
+      color: var(--text-muted);
+      transition: transform .2s;
+      margin-left: auto;
+    }
+    #log-drawer.open #log-chevron { transform: rotate(180deg); }
+
+    .log-drawer-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .9px;
+      color: var(--text-muted);
+    }
+
+    /* Log tab switcher */
+    .log-tabs {
+      display: flex;
+      gap: 2px;
+      background: var(--surface2);
+      border-radius: 6px;
+      padding: 2px;
+    }
+    .log-tab-btn {
+      padding: 2px 10px;
+      font-size: 11px;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: color .15s, background .15s;
+    }
+    .log-tab-btn.active { background: var(--surface); color: var(--text); }
+
+    /* Badge on log header for unread counts */
+    .log-badge {
+      display: none;
+      background: var(--accent);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 10px;
+      min-width: 18px;
+      text-align: center;
+    }
+    .log-badge.visible { display: inline-block; }
+
+    /* Log body */
+    .log-body {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+    .log-pane {
+      display: none;
+      position: absolute;
+      inset: 0;
+      overflow-y: auto;
+      padding: 8px 14px;
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      gap: 2px;
+      flex-direction: column;
+    }
+    .log-pane.active { display: flex; }
+    .log-pane::-webkit-scrollbar { width: 6px; }
+    .log-pane::-webkit-scrollbar-track { background: transparent; }
+    .log-pane::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    .log-entry { display: flex; gap: 8px; white-space: pre-wrap; word-break: break-word; }
+    .log-entry .log-ts { color: var(--text-muted); flex-shrink: 0; }
+    .log-entry .log-lvl { flex-shrink: 0; font-weight: 600; min-width: 52px; }
+    .log-entry .log-msg { color: var(--text); }
+    .log-entry.DEBUG .log-lvl { color: var(--text-muted); }
+    .log-entry.INFO  .log-lvl { color: var(--accent); }
+    .log-entry.WARNING .log-lvl { color: var(--warning); }
+    .log-entry.ERROR   .log-lvl { color: var(--error); }
+    .log-entry.client  .log-lvl { color: var(--success); }
+
+    /* log drawer clear/auto-scroll controls */
+    .log-drawer-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: 8px;
+    }
+    .log-ctrl-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 11px;
+      cursor: pointer;
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+    .log-ctrl-btn:hover { background: var(--surface2); color: var(--text); }
+    .log-ctrl-btn.toggled { color: var(--accent); }
   </style>
 </head>
 <body>
@@ -281,53 +402,81 @@
   </div>
 </header>
 
-<div class="layout">
-  <aside>
-    <div class="sidebar-label">Commands</div>
-    {% set icons = {
-        "bio": "👤", "resume": "📄", "application": "📋",
-        "preference": "⚙️", "project": "🗂️",
-        "work_experience": "💼", "help": "❓"
-    } %}
-    {% for group, subactions in commands.items() %}
-    <button
-      class="tab-btn {% if loop.first %}active{% endif %}"
-      data-group="{{ group }}"
-      data-subactions="{{ subactions | join(',') }}"
-      onclick="selectGroup(this)"
-    >
-      <span class="tab-icon">{{ icons.get(group, '▸') }}</span>
-      {{ group.replace('_', ' ') }}
-    </button>
-    {% endfor %}
-  </aside>
+<div class="body-wrap">
+  <div class="layout">
+    <aside>
+      <div class="sidebar-label">Commands</div>
+      {% set icons = {
+          "bio": "👤", "resume": "📄", "application": "📋",
+          "preference": "⚙️", "project": "🗂️",
+          "work_experience": "💼", "help": "❓"
+      } %}
+      {% for group, subactions in commands.items() %}
+      <button
+        class="tab-btn {% if loop.first %}active{% endif %}"
+        data-group="{{ group }}"
+        data-subactions="{{ subactions | join(',') }}"
+        onclick="selectGroup(this)"
+      >
+        <span class="tab-icon">{{ icons.get(group, '▸') }}</span>
+        {{ group.replace('_', ' ') }}
+      </button>
+      {% endfor %}
+    </aside>
 
-  <main>
-    <div class="command-panel">
-      <div class="field">
-        <label>Command</label>
-        <div id="group-display">—</div>
+    <main>
+      <div class="command-panel">
+        <div class="field">
+          <label>Command</label>
+          <div id="group-display">—</div>
+        </div>
+        <div class="field">
+          <label>Subcommand</label>
+          <select id="subcommand-select"></select>
+        </div>
+        <button id="proceed-btn" onclick="proceed()" disabled>Proceed</button>
       </div>
-      <div class="field">
-        <label>Subcommand</label>
-        <select id="subcommand-select"></select>
+
+      <div class="output-wrap">
+        <div class="output-header">
+          <span>Output</span>
+          <button class="hdr-btn" onclick="clearOutput()">Clear</button>
+        </div>
+        <div id="output"></div>
+        <div id="input-row">
+          <input id="user-input" type="text" placeholder="Type your answer…" autocomplete="off" />
+          <button id="send-btn" onclick="sendInput()">Send</button>
+        </div>
       </div>
-      <button id="proceed-btn" onclick="proceed()" disabled>Proceed</button>
+    </main>
+  </div>
+
+  <!-- ── Collapsible log drawer ── -->
+  <div id="log-drawer">
+    <div id="log-drawer-header" onclick="toggleDrawer()">
+      <span class="log-drawer-title">Logs</span>
+
+      <div class="log-tabs" onclick="event.stopPropagation()">
+        <button class="log-tab-btn active" data-pane="backend" onclick="switchLogTab(this)">Backend</button>
+        <button class="log-tab-btn"        data-pane="client"  onclick="switchLogTab(this)">Client</button>
+      </div>
+
+      <span id="log-badge" class="log-badge"></span>
+
+      <div class="log-drawer-controls" onclick="event.stopPropagation()">
+        <button class="log-ctrl-btn toggled" id="autoscroll-btn" title="Auto-scroll" onclick="toggleAutoScroll()">↓ Auto</button>
+        <button class="log-ctrl-btn" onclick="clearActiveLogs()">Clear</button>
+      </div>
+
+      <span id="log-chevron">▲</span>
     </div>
 
-    <div class="output-wrap">
-      <div class="output-header">
-        <span>Output</span>
-        <button id="clear-btn" onclick="clearOutput()">Clear</button>
-      </div>
-      <div id="output"></div>
-      <div id="input-row">
-        <input id="user-input" type="text" placeholder="Type your answer…" autocomplete="off" />
-        <button id="send-btn" onclick="sendInput()">Send</button>
-      </div>
+    <div class="log-body">
+      <div class="log-pane active" id="log-pane-backend"></div>
+      <div class="log-pane"        id="log-pane-client"></div>
     </div>
-  </main>
-</div>
+  </div>
+</div><!-- .body-wrap -->
 
 <script>
   const WS_URL = "{{ ws_url }}";
@@ -336,6 +485,10 @@
   let ws = null;
   let currentGroup = null;
   let awaitingInput = false;
+  let drawerOpen = false;
+  let autoScroll = true;
+  let activeLogPane = "backend";
+  let unreadBadge = 0;
 
   // ── WebSocket ──────────────────────────────────────────────────────
   function connect() {
@@ -343,19 +496,22 @@
 
     ws.onopen = () => {
       setStatus(true);
-      addMessage("system", "Connected to Job Streamer server.");
+      addOutput("system", "Connected to Job Streamer server.");
+      addClientLog("INFO", "WebSocket connected to " + WS_URL);
       document.getElementById("proceed-btn").disabled = false;
     };
 
     ws.onclose = () => {
       setStatus(false);
-      addMessage("system", "Disconnected. Reconnecting in 3s…");
+      addOutput("system", "Disconnected. Reconnecting in 3s…");
+      addClientLog("WARNING", "WebSocket disconnected — retrying in 3s");
       document.getElementById("proceed-btn").disabled = true;
       setTimeout(connect, 3000);
     };
 
     ws.onerror = () => {
-      addMessage("error", "WebSocket error.");
+      addOutput("error", "WebSocket error.");
+      addClientLog("ERROR", "WebSocket error");
     };
 
     ws.onmessage = (e) => {
@@ -366,39 +522,34 @@
 
   function handleMessage(data) {
     if (data.type === "output") {
-      addMessage(data.message_type || "info", data.message);
+      addOutput(data.message_type || "info", data.message);
     } else if (data.type === "prompt") {
-      addMessage("prompt", `▸ ${data.message}`);
+      addOutput("prompt", `▸ ${data.message}`);
       showInputRow(true);
     } else if (data.type === "done") {
-      addMessage("system", "✓ Command completed.");
+      addOutput("system", "✓ Command completed.");
       showInputRow(false);
       document.getElementById("proceed-btn").disabled = false;
+      addClientLog("INFO", "Command completed");
     } else if (data.type === "error") {
-      addMessage("error", `✗ ${data.message}`);
+      addOutput("error", `✗ ${data.message}`);
       showInputRow(false);
       document.getElementById("proceed-btn").disabled = false;
+      addClientLog("ERROR", "Server error: " + data.message);
+    } else if (data.type === "log") {
+      addBackendLog(data.level, data.message);
     }
   }
 
-  // ── UI helpers ─────────────────────────────────────────────────────
-  function setStatus(connected) {
-    document.getElementById("ws-dot").className = connected ? "connected" : "";
-    document.getElementById("ws-label").textContent = connected ? "Connected" : "Disconnected";
-  }
-
-  function addMessage(type, text) {
-    const icons = { info: "›", success: "✓", error: "✗", warning: "⚠", system: "·", sent: "»", prompt: "?" };
+  // ── Output area ────────────────────────────────────────────────────
+  function addOutput(type, text) {
+    const icons = { info:"›", success:"✓", error:"✗", warning:"⚠", system:"·", sent:"»", prompt:"?" };
     const el = document.createElement("div");
     el.className = `msg ${type}`;
-    el.innerHTML = `<span class="msg-icon">${icons[type] || "›"}</span><span class="msg-text">${escHtml(text)}</span>`;
+    el.innerHTML = `<span class="msg-icon">${icons[type]||"›"}</span><span class="msg-text">${escHtml(text)}</span>`;
     const out = document.getElementById("output");
     out.appendChild(el);
     out.scrollTop = out.scrollHeight;
-  }
-
-  function escHtml(t) {
-    return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
   }
 
   function clearOutput() {
@@ -407,53 +558,108 @@
 
   function showInputRow(visible) {
     awaitingInput = visible;
-    const row = document.getElementById("input-row");
-    row.classList.toggle("visible", visible);
-    if (visible) {
-      document.getElementById("user-input").focus();
+    document.getElementById("input-row").classList.toggle("visible", visible);
+    if (visible) document.getElementById("user-input").focus();
+  }
+
+  // ── Log drawer ─────────────────────────────────────────────────────
+  function toggleDrawer() {
+    drawerOpen = !drawerOpen;
+    document.getElementById("log-drawer").classList.toggle("open", drawerOpen);
+    if (drawerOpen) {
+      unreadBadge = 0;
+      updateBadge();
     }
+  }
+
+  function switchLogTab(btn) {
+    document.querySelectorAll(".log-tab-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    activeLogPane = btn.dataset.pane;
+    document.querySelectorAll(".log-pane").forEach(p => p.classList.remove("active"));
+    document.getElementById("log-pane-" + activeLogPane).classList.add("active");
+  }
+
+  function toggleAutoScroll() {
+    autoScroll = !autoScroll;
+    document.getElementById("autoscroll-btn").classList.toggle("toggled", autoScroll);
+  }
+
+  function clearActiveLogs() {
+    document.getElementById("log-pane-" + activeLogPane).innerHTML = "";
+  }
+
+  function updateBadge() {
+    const badge = document.getElementById("log-badge");
+    if (unreadBadge > 0 && !drawerOpen) {
+      badge.textContent = unreadBadge > 99 ? "99+" : unreadBadge;
+      badge.classList.add("visible");
+    } else {
+      badge.classList.remove("visible");
+    }
+  }
+
+  function appendLogEntry(paneId, level, message, extraClass) {
+    const pane = document.getElementById(paneId);
+    const ts = new Date().toTimeString().slice(0, 8);
+    const entry = document.createElement("div");
+    entry.className = `log-entry ${level} ${extraClass || ""}`;
+    entry.innerHTML =
+      `<span class="log-ts">${ts}</span>` +
+      `<span class="log-lvl">${escHtml(level)}</span>` +
+      `<span class="log-msg">${escHtml(message)}</span>`;
+    pane.appendChild(entry);
+    if (autoScroll) pane.scrollTop = pane.scrollHeight;
+
+    if (!drawerOpen) {
+      unreadBadge++;
+      updateBadge();
+    }
+  }
+
+  function addBackendLog(level, message) {
+    appendLogEntry("log-pane-backend", level, message, "");
+  }
+
+  function addClientLog(level, message) {
+    appendLogEntry("log-pane-client", level, message, "client");
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────
+  function setStatus(connected) {
+    document.getElementById("ws-dot").className = connected ? "connected" : "";
+    document.getElementById("ws-label").textContent = connected ? "Connected" : "Disconnected";
+  }
+
+  function escHtml(t) {
+    return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
   }
 
   // ── Tab selection ──────────────────────────────────────────────────
   function selectGroup(btn) {
     document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
-
     currentGroup = btn.dataset.group;
     document.getElementById("group-display").textContent = currentGroup.replace(/_/g, " ");
 
     const subactions = btn.dataset.subactions ? btn.dataset.subactions.split(",") : [];
     const sel = document.getElementById("subcommand-select");
     sel.innerHTML = "";
-
     if (subactions.length === 0) {
-      const opt = document.createElement("option");
-      opt.value = "";
-      opt.textContent = "(no subcommand)";
-      sel.appendChild(opt);
+      sel.innerHTML = `<option value="">(no subcommand)</option>`;
     } else {
-      subactions.forEach(s => {
-        const opt = document.createElement("option");
-        opt.value = s;
-        opt.textContent = s;
-        sel.appendChild(opt);
-      });
+      subactions.forEach(s => sel.insertAdjacentHTML("beforeend", `<option value="${s}">${s}</option>`));
     }
   }
 
   // ── Command dispatch ───────────────────────────────────────────────
   function proceed() {
-    if (!ws || ws.readyState !== WebSocket.OPEN) {
-      addMessage("error", "Not connected.");
-      return;
-    }
-    if (awaitingInput) {
-      addMessage("warning", "Waiting for your input first.");
-      return;
-    }
+    if (!ws || ws.readyState !== WebSocket.OPEN) { addOutput("error", "Not connected."); return; }
+    if (awaitingInput) { addOutput("warning", "Waiting for your input first."); return; }
 
     const subcommand = document.getElementById("subcommand-select").value;
-    addMessage("sent", `${currentGroup} ${subcommand}`.trim());
+    addOutput("sent", `${currentGroup} ${subcommand}`.trim());
+    addClientLog("INFO", `Sending command: ${currentGroup} ${subcommand}`);
     ws.send(JSON.stringify({ type: "command", group: currentGroup, subcommand }));
     document.getElementById("proceed-btn").disabled = true;
   }
@@ -462,20 +668,18 @@
     const input = document.getElementById("user-input");
     const value = input.value.trim();
     if (!value) return;
-
-    addMessage("sent", value);
+    addOutput("sent", value);
+    addClientLog("INFO", `Sending input: "${value}"`);
     ws.send(JSON.stringify({ type: "input", value }));
     input.value = "";
     showInputRow(false);
   }
 
-  // Enter key submits input
-  document.getElementById("user-input").addEventListener("keydown", (e) => {
+  document.getElementById("user-input").addEventListener("keydown", e => {
     if (e.key === "Enter") sendInput();
   });
 
   // ── Boot ───────────────────────────────────────────────────────────
-  // Select first tab on load
   const firstTab = document.querySelector(".tab-btn");
   if (firstTab) selectGroup(firstTab);
 
