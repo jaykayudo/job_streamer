@@ -55,27 +55,49 @@ class PromptGenerator:
         cls,
         job_details: List[JobDetails],
         automation_request_context: AutomationRequestContext,
+        resume_context: str | None = None,
     ) -> dict:
         """
         Generate prompts for the job filtering.
+
+        Args:
+            job_details: List of job listings to score and filter.
+            automation_request_context: The full automation request context.
+            resume_context: Pre-retrieved resume excerpts from the vector store.
+                When provided, used instead of parsing the full resume PDF.
         """
         job_details_jsonified = list(map(lambda x: x.model_dump(), job_details))
         context_jsonified = automation_request_context.model_dump()
-        resume_data = cls._get_resume_data(automation_request_context.resume)
         bio = cls._get_bio_data(automation_request_context.bio)
         work_style = context_jsonified["work_style"]
 
-        prompt = f"""
-            This is a prompt to filter jobs based on the user data.
-            Here are the jobs in json format:
-            {job_details_jsonified}
-            
-            Here is the resume data of the user 
+        if resume_context is not None:
+            resume_section = f"""
+            Here are the most relevant excerpts from the user's resume
+            (retrieved via semantic search — use these to understand the candidate's background):
+            RESUME EXCERPTS
+            ```
+            {resume_context}
+            ```
+            """
+        else:
+            resume_data = cls._get_resume_data(automation_request_context.resume)
+            resume_section = f"""
+            Here is the resume data of the user
             (it may contain inconsistencies so smartly analyze it):
             RESUME
             ```
             {resume_data}
             ```
+            """
+
+        prompt = f"""
+            This is a prompt to filter jobs based on the user data.
+            Here are the jobs in json format:
+            {job_details_jsonified}
+
+            {resume_section}
+
             Here is the users bio to help you understand the user's skill:
             {bio}
         """
@@ -115,7 +137,7 @@ class PromptGenerator:
             if no job has a score of 7 or more, return an empty list.
             You need to return the jobs that are most likely to be a good fit for the user.
             You need to return the jobs in json format as a list of the job ids.
-            You need to return in the format of [job_id1, job_id2, job_id3, ...]
+            You need to return in the format of ["job_id1", "job_id2", "job_id3", ...]
             Return only the job ids as a json list. Do not return any other text.
         """
         return {"system": system_prompt, "user": prompt}

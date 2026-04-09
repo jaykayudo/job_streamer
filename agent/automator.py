@@ -15,7 +15,7 @@ from agent.tools import get_all_tools_initialized
 from agent.types import AgentState
 from automation import get_automator_by_name
 from automation.core.automator.base import BaseAutomator
-from automation.core.automator.types import Category
+from automation.core.automator.types import Category, JobDetails, JobFilter
 from conf.settings import SETTINGS
 from data_handler.langauge_model.prompt_generator import PromptGenerator
 from utils.context import AutomationRequestContext, build_initial_state
@@ -59,9 +59,9 @@ class AutomatorGraph:
         self.automator: BaseAutomator = get_automator_by_name(configuration.platform)()
         self.retriever = self._load_retriever()
 
-        base_model = init_chat_model(SETTINGS.LLM_MODEL_NAME, model_provider=SETTINGS.LLM_MODEL)
+        base_model = OllamaLLM(model=SETTINGS.LLM_MODEL_NAME, temperature=0.4, num_predict=256)
         self.tools = get_all_tools_initialized(self.retriever)
-        self.model = base_model.bind_tools(self.tools)
+        self.model = base_model
 
         self.graph = StateGraph(AgentState)
         self._graph_layout()
@@ -72,19 +72,39 @@ class AutomatorGraph:
     # Setup
     # ------------------------------------------------------------------
 
+    def _has_jobs(self, state: AgentState) -> str:
+        """
+        Shared conditional router: continue if job_details is non-empty, else end.
+        Used after both jobs_retrieval_node and job_filtering_node.
+        """
+        if state.get("job_details"):
+            return "continue"
+        logger.warning("[_has_jobs] No jobs in state — ending graph early.")
+        return "end"
+
     def _graph_layout(self):
         """Wire up all nodes and edges."""
         self.graph.add_node("start_node",                   self.start_node)
-        self.graph.add_node("job_filtering_node",           self.job_filtering_node)
+        self.graph.add_node("job_category_filtering_node",  self.job_category_filtering_node)
         self.graph.add_node("jobs_retrieval_node",          self.jobs_retrieval_node)
+        self.graph.add_node("job_filtering_node",           self.job_filtering_node)
         self.graph.add_node("jobs_questions_retrieval_node",self.jobs_questions_retrieval_node)
         self.graph.add_node("jobs_application_node",        self.jobs_application_node)
         self.graph.add_node("finalization_node",            self.finalization_node)
 
         self.graph.add_edge(START,                              "start_node")
-        self.graph.add_edge("start_node",                       "job_filtering_node")
-        self.graph.add_edge("job_filtering_node",               "jobs_retrieval_node")
-        self.graph.add_edge("jobs_retrieval_node",              "jobs_questions_retrieval_node")
+        self.graph.add_edge("start_node",                       "job_category_filtering_node")
+        self.graph.add_edge("job_category_filtering_node",      "jobs_retrieval_node")
+        self.graph.add_conditional_edges(
+            "jobs_retrieval_node",
+            self._has_jobs,
+            {"continue": "job_filtering_node", "end": END},
+        )
+        self.graph.add_conditional_edges(
+            "job_filtering_node",
+            self._has_jobs,
+            {"continue": "jobs_questions_retrieval_node", "end": END},
+        )
         self.graph.add_edge("jobs_questions_retrieval_node",    "jobs_application_node")
         self.graph.add_edge("jobs_application_node",            "finalization_node")
         self.graph.add_edge("finalization_node",                END)
@@ -180,7 +200,7 @@ class AutomatorGraph:
             ],
         }
 
-    def job_filtering_node(self, state: AgentState) -> dict:
+    def job_category_filtering_node(self, state: AgentState) -> dict:
         """
         Use the LLM to select the most relevant job categories for this user.
 
@@ -192,7 +212,7 @@ class AutomatorGraph:
           4. Parse the IDs, filter the available categories, and update state.
         """
         all_categories: List[Category] = state["categories"]
-        logger.info(f"[job_filtering_node] Filtering {len(all_categories)} categories.")
+        logger.info(f"[job_category_filtering_node] Filtering {len(all_categories)} categories.")
 
         # 1. Retrieve focused resume excerpts instead of embedding the full PDF.
         resume_context = self._retrieve_resume_context()
@@ -210,11 +230,10 @@ class AutomatorGraph:
         ]
 
         # 3. Invoke LLM.
-        logger.info(f"[job_filtering_node] Invoking LLM for category filtering...")
+        logger.info(f"[job_category_filtering_node] Invoking LLM for category filtering...")
         result = self.model.invoke(messages)
         raw_text: str = result if isinstance(result, str) else result.content
-        # change to debug after viewing the raw response format
-        logger.info(f"[job_filtering_node] LLM raw response: {raw_text[:300]}")
+        logger.debug(f"[job_category_filtering_node] LLM raw response: {raw_text[:300]}")
 
         # 4. Parse IDs and filter categories.
         selected_ids = _parse_json_list(raw_text)
@@ -223,18 +242,18 @@ class AutomatorGraph:
 
         if not filtered:
             logger.warning(
-                "[job_filtering_node] LLM returned no matching category IDs. "
+                "[job_category_filtering_node] LLM returned no matching category IDs. "
                 "Falling back to all available categories."
             )
             filtered = all_categories
 
         logger.info(
-            f"[job_filtering_node] {len(all_categories)} → {len(filtered)} categories: "
+            f"[job_category_filtering_node] {len(all_categories)} → {len(filtered)} categories: "
             f"{[c.name for c in filtered]}"
         )
         
-        # Remove after debugging
-        print(f"Selected category IDs: {selected_ids}")
+        
+        logger.debug(f"[job_category_filtering_node] Selected category IDs: {selected_ids}")
 
         return {
             "categories": filtered,
@@ -247,14 +266,133 @@ class AutomatorGraph:
                 )
             ],
         }
-
-    # ------------------------------------------------------------------
-    # Stub nodes (to be implemented)
-    # ------------------------------------------------------------------
+        
 
     def jobs_retrieval_node(self, state: AgentState) -> dict:
-        """Retrieve job listings for the selected categories."""
-        return {}
+        """
+        Retrieve job listings for the selected categories.
+        Flow:
+        1. Get the category from the state which was selected by the LLM in the previous node.
+        2. Use the automator to retrieve jobs for each category, and aggregate them in
+        3. Save the retrieved jobs to the state to be filtered in the next node.
+        """
+        categories = state["categories"]
+        job_count = state["job_count"]
+        logger.info(f"[jobs_retrieval_node] Retrieving jobs for {len(categories)} categories.")
+
+        seen_ids: set[str] = set()
+        all_jobs = []
+
+        for category in categories:
+            filters = [JobFilter(id=category.id, name=category.name)]
+            jobs = self.automator.get_jobs(count=job_count, filters=filters)
+            for job in jobs:
+                if job.id not in seen_ids:
+                    seen_ids.add(job.id)
+                    all_jobs.append(job)
+
+        logger.info(f"[jobs_retrieval_node] Retrieved {len(all_jobs)} unique jobs across all categories.")
+
+        logger.info("[jobs_retrieval_node] Fetching job details for each listing...")
+        job_details: List[JobDetails] = []
+        for job in all_jobs:
+            try:
+                details = self.automator.get_job_details(job)
+                job_details.append(details)
+            except Exception as e:
+                logger.warning(f"[jobs_retrieval_node] Could not fetch details for job {job.id}: {e}")
+
+        logger.info(f"[jobs_retrieval_node] Fetched details for {len(job_details)} jobs.")
+
+        return {
+            "job_details": job_details,
+            "messages": [
+                SystemMessage(
+                    content=(
+                        f"Jobs retrieved. {len(job_details)} job listings fetched across "
+                        f"{len(categories)} categories."
+                    )
+                )
+            ],
+        }
+
+    def job_filtering_node(self, state: AgentState) -> dict:
+        """
+        Use the LLM to further filter retrieved jobs to best fit the user's preferences,
+        request, and skillset.
+        Flow:
+        1. The resume context is retrieved from the vector store.
+        2. The prompt is built via PromptGenerator, incorporating user preferences and resume context.
+        3. Extra context gotten from the user is passed to the prompt
+        4. The job count is passed to ensure the LLM only selects a certain number of jobs.
+        5. Criterias like location and skillset will be considered when filtering the jobs.
+        For example, if the user prefers remote jobs and has strong Python skills, the LLM will prioritize jobs that are remote and require Python.
+        6. Jobs are selected and filtered based on which offers the best benefits and compensation package, and which ones the user is most qualified for based on their resume.
+        7. The LLM response is expected to be a JSON list of job IDs.
+
+        """
+        all_job_details: List[JobDetails] = state["job_details"]
+        job_count: int = state["job_count"]
+        logger.info(f"[job_filtering_node] Filtering {len(all_job_details)} jobs (target: {job_count}).")
+
+        if not all_job_details:
+            logger.warning("[job_filtering_node] No jobs to filter, skipping.")
+            return {}
+
+        # 1. Retrieve focused resume excerpts.
+        resume_context = self._retrieve_resume_context()
+
+        # 2. Build prompt with full context (resume, bio, work style, extra instruction).
+        prompt = PromptGenerator.generate_prompt_for_job_filtering(
+            all_job_details,
+            self.config,
+            resume_context=resume_context,
+        )
+
+        # 3. Append job count constraint to user prompt.
+        user_prompt = prompt["user"]
+        messages = [
+            SystemMessage(content=prompt["system"]),
+            HumanMessage(content=user_prompt),
+        ]
+
+        # 4. Invoke LLM.
+        logger.info("[job_filtering_node] Invoking LLM for job filtering...")
+        result = self.model.invoke(messages)
+        raw_text: str = result if isinstance(result, str) else result.content
+        logger.debug(f"[job_filtering_node] LLM raw response: {raw_text[:300]}")
+
+        # 5. Parse IDs, filter job_details, and cap at job_count.
+        selected_ids = _parse_json_list(raw_text)
+        id_set = set(selected_ids)
+        filtered = [j for j in all_job_details if j.job.id in id_set]
+
+        if not filtered:
+            logger.warning(
+                "[job_filtering_node] LLM returned no matching job IDs. "
+                "Ending Job Filtering."
+            )
+            return {}
+
+        filtered = filtered[:job_count]
+
+        logger.info(
+            f"[job_filtering_node] {len(all_job_details)} → {len(filtered)} jobs: "
+            f"{[j.job.title for j in filtered]}"
+        )
+
+        return {
+            "job_details": filtered,
+            "messages": [
+                SystemMessage(
+                    content=(
+                        f"Job filtering complete. "
+                        f"Selected {len(filtered)} jobs: {[j.job.title for j in filtered]}"
+                    )
+                )
+            ],
+        }
+    
 
     def jobs_questions_retrieval_node(self, state: AgentState) -> dict:
         """Fetch application-form questions for each job."""

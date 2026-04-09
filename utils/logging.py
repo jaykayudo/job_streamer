@@ -1,8 +1,16 @@
-from loguru import logger
+from __future__ import annotations
+
 from datetime import datetime
+from typing import TYPE_CHECKING
+
+from loguru import logger
+
 from conf.settings import SETTINGS
 import os
 import sys
+
+if TYPE_CHECKING:
+    from loguru import Logger
 
 
 class JobStreamerLogger:
@@ -11,7 +19,7 @@ class JobStreamerLogger:
     """
 
     instance = None
-    logger: logger = None
+    logger: Logger = None
 
     def __new__(cls, *args, **kwargs):
         if cls.instance is None:
@@ -19,7 +27,7 @@ class JobStreamerLogger:
             cls.logger = cls.instance.setup_logger()
         return cls.instance
 
-    def setup_logger(self) -> logger:
+    def setup_logger(self) -> Logger:
         """
         Setup the logger.
         """
@@ -55,7 +63,19 @@ class JobStreamerLogger:
             self.logger.remove(self._stdout_sink_id)
             self._stdout_sink_id = None
 
-    def get_logger(self) -> logger:
+    def set_level(self, level: str):
+        """Re-register the stdout sink at the given level (e.g. 'DEBUG', 'INFO')."""
+        self.remove_stdout_sink()
+        self._stdout_sink_id = self.logger.add(
+            sys.stdout,
+            level=level,
+            format="{time}| {level}| {name} - {message}",
+            backtrace=False,
+            diagnose=False,
+            enqueue=True,
+        )
+
+    def get_logger(self) -> Logger:
         """
         Get the logger.
         """
