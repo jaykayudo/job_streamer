@@ -1,4 +1,5 @@
 import os
+from enum import Enum
 from typing import Literal
 import toml
 from conf.configuration import FULL_CONFIG
@@ -7,6 +8,10 @@ from utils.types import ClientType
 
 Modules = Literal["workable", "wellfound", "web3_career"]
 
+class ModulesName(Enum):
+    WORKABLE = "workable"
+    WELLFOUND = "wellfound"
+    WEB3_CAREER = "web3_career"
 
 class Settings:
     """
@@ -40,10 +45,14 @@ class Settings:
         )
         self.SE_REMOTE_URL = os.getenv("SE_REMOTE_URL", "http://localhost:4444/wd/hub")
         self.DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///example.db")
+        self.CHROMA_DB_URL = os.getenv("CHROMA_DB_URL", "chroma_db")
         self.WS_HOST = os.getenv("WS_HOST", "localhost")
         self.WS_PORT = int(os.getenv("WS_PORT", 8765))
         self.WEB_HOST = os.getenv("WEB_HOST", "0.0.0.0")
         self.WEB_PORT = int(os.getenv("WEB_PORT", 5050))
+        self.LLM_MODEL = os.getenv("LLM_MODEL", "ollama")
+        self.LLM_MODEL_NAME = os.getenv("LLM_MODEL_NAME", "qwen3.5")
+        self.LLM_EMBEDDING_MODEL = os.getenv("LLM_EMBEDDING_MODEL", "nomic-embed-text")
 
     def _path_settings(self):
         """

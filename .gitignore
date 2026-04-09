@@ -228,3 +228,6 @@ storage/resumes
 
 # ds-store
 .DS_Store
+
+# chroma local db
+chroma_db/

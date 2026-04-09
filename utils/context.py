@@ -40,3 +40,25 @@ class AutomationRequestContext(BaseModel):
     @field_serializer("resume")
     def serialize_resume(self, resume: Resume, _info) -> str:
         return resume.json_dump()
+
+
+def build_initial_state(context: AutomationRequestContext) -> dict:
+    return {
+        "platform": context.platform,
+        "messages": [],
+        "resume_object": context.resume,
+        "bio_object": context.bio,
+        "preferences_object": None,
+        "categories": [],
+        "job_details": [],
+        "job_application_details": None,
+        "applied_jobs": None,
+        "location": None,
+        "skills": None,
+        "hiring_types": None,
+        "industries": None,
+        "work_style": None,
+        "salary_range": None,
+        "job_count": context.job_count,
+        "extra_job_selection_intruction": None,
+    }
