@@ -125,37 +125,68 @@ class PromptGenerator:
         cls,
         job_categories: List[Category],
         automation_request_context: AutomationRequestContext,
+        resume_context: str | None = None,
     ) -> dict:
         """
         Generate prompts for the job category selection.
+
+        Args:
+            job_categories: All available categories on the platform.
+            automation_request_context: The full automation request context.
+            resume_context: Pre-retrieved resume excerpts from the vector store.
+                When provided, these chunks are used instead of parsing the full
+                resume PDF, keeping the prompt concise and focused.
+                When None, the full resume text is extracted and embedded directly.
         """
         categories = list(map(lambda x: x.model_dump(), job_categories))
-        resume_data = cls._get_resume_data(automation_request_context.resume)
         bio = cls._get_bio_data(automation_request_context.bio)
 
-        prompt = f"""
-            This is a prompt to choose the job category for the user based on the user's data.
-            Here are the categories in json format:
-            {categories}
-            
-            Here is the resume data of the user 
+        if resume_context is not None:
+            resume_section = f"""
+            Here are the most relevant excerpts from the user's resume
+            (retrieved via semantic search — use these to understand the candidate's background):
+            RESUME EXCERPTS
+            ```
+            {resume_context}
+            ```
+            """
+        else:
+            resume_data = cls._get_resume_data(automation_request_context.resume)
+            resume_section = f"""
+            Here is the full resume data of the user
             (it may contain inconsistencies so smartly analyze it):
             RESUME
             ```
             {resume_data}
             ```
-            Here is the users bio to help you understand the user's skill:
+            """
+
+        prompt = f"""
+            This is a prompt to choose the job category for the user based on the user's data.
+            Here are the available categories in json format:
+            {categories}
+
+            {resume_section}
+
+            Here is the user's bio to help you understand their skills:
             ```
             {bio}
             ```
-            
         """
-        system_prompt = f"""
+
+        if automation_request_context.extra_job_selection_intruction:
+            prompt += f"""
+            Here is an extra instruction from the user for category selection:
+            {automation_request_context.extra_job_selection_intruction}
+            """
+
+        system_prompt = """
             You are a job category expert.
-            Based on the provided information, return the most suitable job categories for the user.
-            You need to return the job categories as a json list of ids.
-            You need to return in the format of [id1, id2, id3, ...]
-            Return only the job category ids as a json list. Do not return any other text.
+            Based on the provided resume, bio, and any extra instructions, return the most
+            suitable job categories for the user.
+            You need to return the job category ids as a JSON list.
+            Format: ["id1", "id2", "id3", ...]
+            Return only the JSON list. Do not return any other text.
         """
 
         return {"system": system_prompt, "user": prompt}
