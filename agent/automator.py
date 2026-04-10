@@ -15,7 +15,13 @@ from agent.tools import get_all_tools_initialized
 from agent.types import AgentState
 from automation import get_automator_by_name
 from automation.core.automator.base import BaseAutomator
-from automation.core.automator.types import Category, JobDetails, JobFilter
+from automation.core.automator.types import (
+    Category,
+    JobApplicationDetails,
+    JobApplicationDetailsAnswer,
+    JobDetails,
+    JobFilter,
+)
 from conf.settings import SETTINGS
 from data_handler.langauge_model.prompt_generator import PromptGenerator
 from utils.context import AutomationRequestContext, build_initial_state
@@ -41,6 +47,22 @@ def _parse_json_list(text: str) -> list[str]:
         return [str(item) for item in result if item is not None]
     except json.JSONDecodeError:
         logger.warning(f"Could not parse JSON list from LLM response: {text[:200]}")
+        return []
+
+
+def _parse_answer_list(text: str) -> list[dict]:
+    """
+    Extract a JSON list of {id, answer} dicts from an LLM response string.
+    Returns an empty list if parsing fails.
+    """
+    match = re.search(r"\[.*?\]", text, re.DOTALL)
+    if not match:
+        return []
+    try:
+        result = json.loads(match.group())
+        return [item for item in result if isinstance(item, dict) and "id" in item]
+    except json.JSONDecodeError:
+        logger.warning(f"Could not parse answer list from LLM response: {text[:200]}")
         return []
 
 
@@ -88,9 +110,10 @@ class AutomatorGraph:
         self.graph.add_node("job_category_filtering_node",  self.job_category_filtering_node)
         self.graph.add_node("jobs_retrieval_node",          self.jobs_retrieval_node)
         self.graph.add_node("job_filtering_node",           self.job_filtering_node)
-        self.graph.add_node("jobs_questions_retrieval_node",self.jobs_questions_retrieval_node)
-        self.graph.add_node("jobs_application_node",        self.jobs_application_node)
-        self.graph.add_node("finalization_node",            self.finalization_node)
+        self.graph.add_node("job_questions_retrieval_node",  self.job_questions_retrieval_node)
+        self.graph.add_node("job_questions_answering_node",   self.job_questions_answering_node)
+        self.graph.add_node("jobs_application_submission_node", self.jobs_application_submission_node)
+        self.graph.add_node("finalization_node",              self.finalization_node)
 
         self.graph.add_edge(START,                              "start_node")
         self.graph.add_edge("start_node",                       "job_category_filtering_node")
@@ -103,10 +126,11 @@ class AutomatorGraph:
         self.graph.add_conditional_edges(
             "job_filtering_node",
             self._has_jobs,
-            {"continue": "jobs_questions_retrieval_node", "end": END},
+            {"continue": "job_questions_retrieval_node", "end": END},
         )
-        self.graph.add_edge("jobs_questions_retrieval_node",    "jobs_application_node")
-        self.graph.add_edge("jobs_application_node",            "finalization_node")
+        self.graph.add_edge("job_questions_retrieval_node",     "job_questions_answering_node")
+        self.graph.add_edge("job_questions_answering_node",     "jobs_application_submission_node")
+        self.graph.add_edge("jobs_application_submission_node", "finalization_node")
         self.graph.add_edge("finalization_node",                END)
 
     def _display_graph_layout(self):
@@ -394,11 +418,130 @@ class AutomatorGraph:
         }
     
 
-    def jobs_questions_retrieval_node(self, state: AgentState) -> dict:
-        """Fetch application-form questions for each job."""
-        return {}
+    def job_questions_retrieval_node(self, state: AgentState) -> dict:
+        """
+        Fetch application-form questions for each job.
+        Flow:
+        1. For each job in state, use the automator to retrieve the application questions.
+        2. Store the questions in state, keyed by job URL for easy retrieval in the next node.
+        """
+        job_details: List[JobDetails] = state["job_details"]
+        logger.info(f"[job_questions_retrieval_node] Fetching questions for {len(job_details)} jobs.")
 
-    def jobs_application_node(self, state: AgentState) -> dict:
+        job_application_details: dict[str, list[JobApplicationDetails]] = {}
+        for job in job_details:
+            try:
+                questions = self.automator.get_job_application_details(job)
+                job_application_details[job.job.url] = questions
+                logger.info(
+                    f"[job_questions_retrieval_node] {job.job.title}: {len(questions)} questions."
+                )
+            except Exception as e:
+                logger.warning(
+                    f"[job_questions_retrieval_node] Could not fetch questions for "
+                    f"'{job.job.title}': {e}"
+                )
+
+        logger.info(
+            f"[job_questions_retrieval_node] Questions fetched for "
+            f"{len(job_application_details)}/{len(job_details)} jobs."
+        )
+
+        return {
+            "job_application_details": job_application_details,
+            "messages": [
+                SystemMessage(
+                    content=(
+                        f"Application questions retrieved for {len(job_application_details)} jobs."
+                    )
+                )
+            ],
+        }
+
+    def job_questions_answering_node(self, state: AgentState) -> dict:
+        """
+        Use the LLM to answer application questions for each job based on the user's resume, bio, and preferences.
+        Flow:
+        1. For each job, retrieve the application questions via the automator.
+        2. Build a prompt for each application question using PromptGenerator, incorporating resume context and any relevant user preferences.
+        3. Invoke the LLM to generate answers for each question.
+        4. Store the answers in state to be used in the application submission node.
+        """
+        job_details: List[JobDetails] = state["job_details"]
+        job_application_details: dict = state.get("job_application_details") or {}
+        logger.info(f"[job_questions_answering_node] Generating answers for {len(job_details)} jobs.")
+
+        # Retrieve resume context once and reuse across all jobs.
+        resume_context = self._retrieve_resume_context()
+
+        job_application_answers: dict[str, list[JobApplicationDetailsAnswer]] = {}
+
+        for job in job_details:
+            questions = job_application_details.get(job.job.url)
+            if not questions:
+                logger.warning(
+                    f"[job_questions_answering_node] No questions for '{job.job.title}', skipping."
+                )
+                continue
+
+            # Build per-job prompt with job context + resume excerpts.
+            prompt = PromptGenerator.generate_prompt_for_answering_job_application_details(
+                questions,
+                self.config,
+                job_details=job,
+                resume_context=resume_context,
+            )
+
+            messages = [
+                SystemMessage(content=prompt["system"]),
+                HumanMessage(content=prompt["user"]),
+            ]
+
+            logger.info(
+                f"[job_questions_answering_node] Invoking LLM for '{job.job.title}'..."
+            )
+            result = self.model.invoke(messages)
+            raw_text: str = result if isinstance(result, str) else result.content
+            logger.debug(
+                f"[job_questions_answering_node] LLM raw response for "
+                f"'{job.job.title}': {raw_text[:300]}"
+            )
+
+            # Parse answers and map back to JobApplicationDetailsAnswer objects.
+            parsed = _parse_answer_list(raw_text)
+            answer_map = {item["id"]: item.get("answer", "") for item in parsed}
+
+            answers: list[JobApplicationDetailsAnswer] = []
+            for question in questions:
+                answers.append(
+                    JobApplicationDetailsAnswer(
+                        id=question.id,
+                        unique_selector=question.unique_selector,
+                        selector_type=question.selector_type,
+                        application_details=question,
+                        value=answer_map.get(question.id, ""),
+                    )
+                )
+
+            job_application_answers[job.job.url] = answers
+            logger.info(
+                f"[job_questions_answering_node] Generated {len(answers)} answers "
+                f"for '{job.job.title}'."
+            )
+
+        return {
+            "job_application_answers": job_application_answers,
+            "messages": [
+                SystemMessage(
+                    content=(
+                        f"Application answers generated for "
+                        f"{len(job_application_answers)} jobs."
+                    )
+                )
+            ],
+        }
+
+    def jobs_application_submission_node(self, state: AgentState) -> dict:
         """Fill and submit job applications via the automator."""
         return {}
 

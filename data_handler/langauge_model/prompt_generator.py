@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import List
 from automation.core.automator.types import Category, JobApplicationDetails, JobDetails
 from utils.context import AutomationRequestContext
@@ -218,17 +220,59 @@ class PromptGenerator:
         cls,
         job_application_details: List[JobApplicationDetails],
         automation_request_context: AutomationRequestContext,
+        job_details: JobDetails | None = None,
+        resume_context: str | None = None,
     ) -> dict:
         """
-        Generate prompts for the job application details.
+        Generate prompts for answering job application form questions.
+
+        Args:
+            job_application_details: The list of form questions to answer.
+            automation_request_context: The full automation request context.
+            job_details: Details of the specific job being applied to.
+                When provided, the LLM is given job context (title, description,
+                company) so it can tailor answers (e.g. cover letter, motivation).
+            resume_context: Pre-retrieved resume excerpts from the vector store.
+                When provided, used instead of parsing the full resume PDF, keeping
+                the prompt focused and concise.
         """
         details_jsonified = cls._convert_questions_to_prompt_format(
             job_application_details
         )
         context_jsonified = automation_request_context.model_dump()
-        resume_data = cls._get_resume_data(automation_request_context.resume)
         bio = cls._get_bio_data(automation_request_context.bio)
         work_style = context_jsonified["work_style"]
+
+        if resume_context is not None:
+            resume_section = f"""
+            Here are the most relevant excerpts from the user's resume
+            (retrieved via semantic search):
+            RESUME EXCERPTS
+            ```
+            {resume_context}
+            ```
+            """
+        else:
+            resume_data = cls._get_resume_data(automation_request_context.resume)
+            resume_section = f"""
+            Here is the resume data of the user
+            (it may contain inconsistencies so smartly analyze it):
+            RESUME
+            ```
+            {resume_data}
+            ```
+            """
+
+        job_section = ""
+        if job_details is not None:
+            job_section = f"""
+            Here is the job the user is applying to:
+            - Title: {job_details.job.title}
+            - Company: {job_details.company or "N/A"}
+            - Location: {job_details.job.location or "N/A"}
+            - Description: {job_details.description}
+            """
+
         prompt = f"""
             This is a prompt to answer the job application questions for the user based on the user's data.
             The questions are in the following format:
@@ -244,16 +288,14 @@ class PromptGenerator:
             ]
             ```
             Here are the job application questions in json format:
-            
+
             {details_jsonified}
-            
-            Here is the resume data of the user 
-            (it may contain inconsistencies so smartly analyze it):
-            RESUME
-            ```
-            {resume_data}
-            ```
-            Here is the users bio to help you understand the user's skill:
+
+            {job_section}
+
+            {resume_section}
+
+            Here is the user's bio to help you understand their skills:
             ```
             {bio}
             ```
@@ -296,7 +338,7 @@ class PromptGenerator:
                 ...
             ]
             ```
-            If the question is not required, you can return an empty string for the answer.
+            If the question is not required, you can return an empty string for the answer if there is no direct information from the user's data for the answer.
             If the question has options, smartly analyze the user's data and return the most suitable option.
             If the question has no options, you need to generate the answer based on the user's data.
             If the question is required, you need to return the answer.

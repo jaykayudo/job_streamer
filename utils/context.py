@@ -52,6 +52,7 @@ def build_initial_state(context: AutomationRequestContext) -> dict:
         "categories": [],
         "job_details": [],
         "job_application_details": None,
+        "job_application_answers": None,
         "applied_jobs": None,
         "location": None,
         "skills": None,

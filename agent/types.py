@@ -8,6 +8,7 @@ from automation.core.automator.types import (
     HiringType,
     Industry,
     JobApplicationDetails,
+    JobApplicationDetailsAnswer,
     JobDetails,
 )
 from storage.core.models import Application, Resume, Bio, SavedPreference
@@ -28,8 +29,10 @@ class AgentState(TypedDict):
     preferences_object: SavedPreference
     categories: List[Category]
     job_details: List[JobDetails]
-    # Maps job URL -> list of application form questions (populated by questions node)
+    # Maps job URL -> list of application form questions (populated by questions retrieval node)
     job_application_details: Optional[Dict[str, List[JobApplicationDetails]]]
+    # Maps job URL -> list of LLM-generated answers (populated by questions answering node)
+    job_application_answers: Optional[Dict[str, List[JobApplicationDetailsAnswer]]]
     # URLs of jobs successfully applied to (populated by application node)
     applied_jobs: Optional[List[str]]
     location: Optional[Location]
