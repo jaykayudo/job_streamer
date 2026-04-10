@@ -1,11 +1,11 @@
 import json
 import os
 import re
-from typing import List
+from typing import Dict, List
 
 from langchain_chroma import Chroma
 from langchain_community.document_loaders import PyPDFLoader
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from langchain_ollama import OllamaEmbeddings, OllamaLLM
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langgraph.graph import END, START, StateGraph
@@ -24,7 +24,9 @@ from automation.core.automator.types import (
 )
 from conf.settings import SETTINGS
 from data_handler.langauge_model.prompt_generator import PromptGenerator
+from services.database.application import ApplicationService
 from utils.context import AutomationRequestContext, build_initial_state
+from utils.file_helper import save_json_to_files_dir
 from utils.logging import JobStreamerLogger
 
 logger = JobStreamerLogger().get_logger()
@@ -475,8 +477,8 @@ class AutomatorGraph:
         resume_context = self._retrieve_resume_context()
 
         job_application_answers: dict[str, list[JobApplicationDetailsAnswer]] = {}
-
-        for job in job_details:
+        messages = []
+        for idx, job in enumerate(job_details):
             questions = job_application_details.get(job.job.url)
             if not questions:
                 logger.warning(
@@ -491,11 +493,10 @@ class AutomatorGraph:
                 job_details=job,
                 resume_context=resume_context,
             )
-
-            messages = [
-                SystemMessage(content=prompt["system"]),
-                HumanMessage(content=prompt["user"]),
-            ]
+            if idx == 0:
+                messages.append(SystemMessage(content=prompt["system"]))
+            messages.append(HumanMessage(content=prompt["user"]))
+        
 
             logger.info(
                 f"[job_questions_answering_node] Invoking LLM for '{job.job.title}'..."
@@ -506,6 +507,7 @@ class AutomatorGraph:
                 f"[job_questions_answering_node] LLM raw response for "
                 f"'{job.job.title}': {raw_text[:300]}"
             )
+            messages.append(AIMessage(content=raw_text))
 
             # Parse answers and map back to JobApplicationDetailsAnswer objects.
             parsed = _parse_answer_list(raw_text)
@@ -542,12 +544,146 @@ class AutomatorGraph:
         }
 
     def jobs_application_submission_node(self, state: AgentState) -> dict:
-        """Fill and submit job applications via the automator."""
-        return {}
+        """
+        Submit job applications via the automator using the LLM-generated answers.
+        Flow:
+        1. For each job, retrieve the pre-generated answers from job_application_answers.
+        2. Call automator.apply_job(job, answers) to submit the application.
+        3. On success:
+           a. Serialise job details, application questions, and answers to a JSON file
+              in SETTINGS.FILES_DIR using save_json_to_files_dir.
+           b. Persist the application record to the database via ApplicationService,
+              storing the saved file path in application_detail_file_path.
+        4. Track URLs of successfully applied jobs and write them to state.
+        """
+        job_details: List[JobDetails] = state["job_details"]
+        job_application_details: Dict[str, list] = state.get("job_application_details") or {}
+        job_application_answers: Dict[str, List[JobApplicationDetailsAnswer]] = state.get("job_application_answers") or {}
+        logger.info(
+            f"[jobs_application_submission_node] Submitting applications for "
+            f"{len(job_details)} jobs."
+        )
+
+        applied_jobs: list[str] = []
+
+        for job in job_details:
+            answers = job_application_answers.get(job.job.url)
+            if not answers:
+                logger.warning(
+                    f"[jobs_application_submission_node] No answers for "
+                    f"'{job.job.title}', skipping submission."
+                )
+                continue
+
+            try:
+                success = self.automator.apply_job(job, answers)
+            except Exception as e:
+                logger.error(
+                    f"[jobs_application_submission_node] Error applying to "
+                    f"'{job.job.title}': {e}"
+                )
+                continue
+
+            if not success:
+                logger.warning(
+                    f"[jobs_application_submission_node] Automator returned False "
+                    f"for '{job.job.title}'."
+                )
+                continue
+
+            applied_jobs.append(job.job.url)
+            logger.info(
+                f"[jobs_application_submission_node] Successfully applied to "
+                f"'{job.job.title}'."
+            )
+
+            # Serialise full application record to a JSON file.
+            questions = job_application_details.get(job.job.url, [])
+            file_data = {
+                "job": job.model_dump(),
+                "questions": [q.model_dump() for q in questions],
+                "answers": [a.model_dump() for a in answers],
+            }
+            safe_id = re.sub(r"[^\w\-]", "_", job.job.id or job.job.title)
+            filename = f"{safe_id}_{self.config.platform}_application.json"
+            try:
+                file_path = save_json_to_files_dir(filename, file_data)
+                logger.info(
+                    f"[jobs_application_submission_node] Saved application file: {file_path}"
+                )
+            except Exception as e:
+                logger.error(
+                    f"[jobs_application_submission_node] Could not save file for "
+                    f"'{job.job.title}': {e}"
+                )
+                file_path = filename  # fall back to relative name
+
+            # Persist to database.
+            try:
+                ApplicationService.create_application(
+                    platform=self.config.platform,
+                    job_title=job.job.title,
+                    job_description=job.description,
+                    job_url=job.job.url,
+                    job_location=job.job.location or "",
+                    application_detail_file_path=file_path,
+                    job_salary=job.pay_range,
+                    job_company=job.company,
+                )
+                logger.info(
+                    f"[jobs_application_submission_node] Persisted DB record for "
+                    f"'{job.job.title}'."
+                )
+            except Exception as e:
+                logger.error(
+                    f"[jobs_application_submission_node] DB persist failed for "
+                    f"'{job.job.title}': {e}"
+                )
+
+        logger.info(
+            f"[jobs_application_submission_node] Applied to "
+            f"{len(applied_jobs)}/{len(job_details)} jobs."
+        )
+
+        return {
+            "applied_jobs": applied_jobs,
+            "messages": [
+                SystemMessage(
+                    content=(
+                        f"Application submission complete. "
+                        f"Applied to {len(applied_jobs)} jobs."
+                    )
+                )
+            ],
+        }
 
     def finalization_node(self, state: AgentState) -> dict:
-        """Persist results and clean up the browser session."""
-        return {}
+        """
+        Log a run summary and clean up the browser session.
+        Database persistence has already been handled per-job in
+        jobs_application_submission_node.
+        """
+        applied_jobs: list[str] = state.get("applied_jobs") or []
+        logger.info(
+            f"[finalization_node] Run complete. "
+            f"{len(applied_jobs)} job(s) applied and persisted."
+        )
+
+        try:
+            self.automator.logout()
+        except Exception as e:
+            logger.warning(f"[finalization_node] Automator logout error: {e}")
+
+        return {
+            "messages": [
+                SystemMessage(
+                    content=(
+                        f"Finalization complete. "
+                        f"Persisted {len(applied_jobs)} application(s) to database."
+                    )
+                )
+            ],
+        }
     
     #-------------------------------------------------------------------
     # Run Function
