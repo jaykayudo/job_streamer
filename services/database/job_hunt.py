@@ -39,6 +39,13 @@ class JobHuntService:
         return job_hunt
 
     @classmethod
+    def get_job_hunt_by_id(cls, job_hunt_id: str) -> Optional[JobHunt]:
+        """
+        Get a job hunt from the database by id
+        """
+        return _db.session.query(JobHunt).filter_by(id=job_hunt_id).first()
+
+    @classmethod
     def get_all_job_hunts(cls) -> List[JobHunt]:
         """
         Return all JobHunt records ordered by creation date descending.

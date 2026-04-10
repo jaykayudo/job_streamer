@@ -70,9 +70,16 @@ class PreferenceService:
     @classmethod
     def get_preference(cls, name: str) -> SavedPreference | None:
         """
-        Get a preference from the database
+        Get a preference from the database by name
         """
         return session.query(SavedPreference).filter_by(name=name).first()
+
+    @classmethod
+    def get_preference_by_id(cls, preference_id: str) -> SavedPreference | None:
+        """
+        Get a preference from the database by id
+        """
+        return session.query(SavedPreference).filter_by(id=preference_id).first()
 
     @classmethod
     def delete_preference(cls, name: str) -> None:
@@ -80,5 +87,14 @@ class PreferenceService:
         Delete a preference from the database
         """
         preference = session.query(SavedPreference).filter_by(name=name).first()
+        if preference:
+            preference.delete()
+
+    @classmethod
+    def delete_preference_by_id(cls, preference_id: str) -> None:
+        """
+        Delete a preference from the database by id
+        """
+        preference = session.query(SavedPreference).filter_by(id=preference_id).first()
         if preference:
             preference.delete()
