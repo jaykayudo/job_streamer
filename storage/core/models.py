@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, ForeignKey, Table, DateTime
+from sqlalchemy import Boolean, Column, String, ForeignKey, Table, DateTime, Text
 from storage.core.engine import BaseModel
 from sqlalchemy.orm import relationship, Mapped
 from typing import List, Dict, Any
@@ -163,4 +163,65 @@ class WorkExperience(BaseModel):
             "start_date": self.start_date,
             "end_date": self.end_date,
             "description": self.description,
+        }
+
+
+class JobHunt(BaseModel):
+    """
+    Persisted record of a job automation run.
+    Complex list fields (categories, locations, skills, hiring_types, industries)
+    are stored as JSON text since SQLite has no native array type.
+    Bio and Resume are stored as foreign keys to their respective tables.
+    """
+    __tablename__ = "job_hunts"
+
+    platform = Column(String(255), nullable=False)
+    bio_id = Column(String(36), ForeignKey("bios.id"), nullable=True)
+    bio: Mapped["Bio"] = relationship("Bio")
+    resume_id = Column(String(36), ForeignKey("resumes.id"), nullable=False)
+    resume: Mapped["Resume"] = relationship("Resume")
+    # JSON-serialised lists of automation type objects
+    categories = Column(Text, nullable=False, default="[]")
+    locations = Column(Text, nullable=False, default="[]")
+    skills = Column(Text, nullable=True)
+    hiring_types = Column(Text, nullable=True)
+    industries = Column(Text, nullable=True)
+    # Simple scalar fields
+    work_style = Column(String(50), nullable=True)
+    salary_min = Column(Text, nullable=True)
+    salary_max = Column(Text, nullable=True)
+    job_count = Column(Text, nullable=False)
+    extra_job_selection_intruction = Column(Text, nullable=True)
+    completed = Column(Boolean, nullable=False, default=False)
+
+    def __repr__(self):
+        return f"<JobHunt {self.platform} completed={self.completed}>"
+
+    def json_dump(self) -> Dict[str, Any]:
+        import json as _json
+
+        def _load(value):
+            if value is None:
+                return None
+            try:
+                return _json.loads(value)
+            except (TypeError, ValueError):
+                return value
+
+        return {
+            **super().json_dump(),
+            "platform": self.platform,
+            "bio": self.bio.json_dump() if self.bio else None,
+            "resume": self.resume.json_dump() if self.resume else None,
+            "categories": _load(self.categories),
+            "locations": _load(self.locations),
+            "skills": _load(self.skills),
+            "hiring_types": _load(self.hiring_types),
+            "industries": _load(self.industries),
+            "work_style": self.work_style,
+            "salary_min": self.salary_min,
+            "salary_max": self.salary_max,
+            "job_count": self.job_count,
+            "extra_job_selection_intruction": self.extra_job_selection_intruction,
+            "completed": self.completed,
         }
