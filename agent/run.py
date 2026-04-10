@@ -13,7 +13,10 @@ from utils.context import AutomationRequestContext
 from agent.automator import AutomatorGraph
 from utils.logging import JobStreamerLogger
 
-logger = JobStreamerLogger().get_logger()
+_job_logger = JobStreamerLogger()
+_job_logger.set_level("DEBUG")
+logger = _job_logger.get_logger()
+
 
 
 def build_context(resume_path: str, bio_text: str, platform: str, job_count: int) -> AutomationRequestContext:
