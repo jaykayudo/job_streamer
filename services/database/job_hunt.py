@@ -1,7 +1,7 @@
 import json
 from typing import List, Optional
 
-from storage.core.engine import session
+import storage.core.engine as _db
 from storage.core.models import Bio, JobHunt, Resume
 from utils.context import AutomationRequestContext
 
@@ -44,7 +44,7 @@ class JobHuntService:
         Return all JobHunt records ordered by creation date descending.
         """
         return (
-            session.query(JobHunt)
+            _db.session.query(JobHunt)
             .order_by(JobHunt.created_at.desc())
             .all()
         )
@@ -54,8 +54,8 @@ class JobHuntService:
         """
         Mark a JobHunt as completed.
         """
-        job_hunt = session.query(JobHunt).filter_by(id=job_hunt_id).first()
+        job_hunt = _db.session.query(JobHunt).filter_by(id=job_hunt_id).first()
         if job_hunt:
             job_hunt.completed = True
-            job_hunt.save()
+            _db.session.commit()
         return job_hunt
