@@ -25,6 +25,13 @@ class ApplicationService:
         return query.all()
 
     @classmethod
+    def get_application_by_id(cls, application_id: str) -> Optional[Application]:
+        """
+        Get an application from the database by id
+        """
+        return session.query(Application).filter_by(id=application_id).first()
+
+    @classmethod
     def create_application(
         cls,
         platform: Modules,

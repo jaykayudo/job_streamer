@@ -36,6 +36,13 @@ class WorkExperienceService:
         return session.query(WorkExperience).filter_by(bio_id=bio_id).all()
 
     @classmethod
+    def get_work_experience_by_id(cls, work_experience_id: str) -> WorkExperience | None:
+        """
+        Get a work experience from the database by id
+        """
+        return session.query(WorkExperience).filter_by(id=work_experience_id).first()
+
+    @classmethod
     def delete_work_experience(cls, work_experience_id: str) -> None:
         """
         Delete a work experience from the database

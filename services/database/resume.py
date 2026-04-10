@@ -28,9 +28,16 @@ class ResumeService:
     @classmethod
     def get_resume(cls, name: str) -> Resume | None:
         """
-        Get a resume from the database
+        Get a resume from the database by name
         """
         return session.query(Resume).filter_by(name=name).first()
+
+    @classmethod
+    def get_resume_by_id(cls, resume_id: str) -> Resume | None:
+        """
+        Get a resume from the database by id
+        """
+        return session.query(Resume).filter_by(id=resume_id).first()
 
     @classmethod
     def delete_resume(cls, name: str) -> None:
@@ -38,5 +45,14 @@ class ResumeService:
         Delete a resume from the database
         """
         resume = session.query(Resume).filter_by(name=name).first()
+        if resume:
+            resume.delete()
+
+    @classmethod
+    def delete_resume_by_id(cls, resume_id: str) -> None:
+        """
+        Delete a resume from the database by id
+        """
+        resume = session.query(Resume).filter_by(id=resume_id).first()
         if resume:
             resume.delete()

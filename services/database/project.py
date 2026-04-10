@@ -34,6 +34,13 @@ class ProjectService:
         return session.query(Project).filter_by(bio_id=bio_id).all()
 
     @classmethod
+    def get_project_by_id(cls, project_id: str) -> Project | None:
+        """
+        Get a project from the database by id
+        """
+        return session.query(Project).filter_by(id=project_id).first()
+
+    @classmethod
     def delete_project(cls, project_id: str) -> None:
         """
         Delete a project from the database
