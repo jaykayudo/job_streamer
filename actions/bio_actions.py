@@ -93,8 +93,8 @@ class BioActions(BaseAction):
         This is done to avoid the message being too large.
         """
         bio_dumped = bio.json_dump()
-        bio_dumped.pop("projects")
-        bio_dumped.pop("work_experiences")
+        bio_dumped.pop("projects", None)
+        bio_dumped.pop("work_experiences", None)
         return bio_dumped
 
     def get_bio(self):

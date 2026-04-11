@@ -10,6 +10,7 @@ from langchain_ollama import OllamaEmbeddings, OllamaLLM
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langgraph.graph import END, START, StateGraph
 from langchain.chat_models import init_chat_model
+from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 
 from agent.tools import get_all_tools_initialized
 from agent.types import AgentState
@@ -28,6 +29,7 @@ from services.database.application import ApplicationService
 from utils.context import AutomationRequestContext, build_initial_state
 from utils.file_helper import save_json_to_files_dir
 from utils.logging import JobStreamerLogger
+
 
 logger = JobStreamerLogger().get_logger()
 
@@ -78,12 +80,21 @@ class AutomatorGraph:
     """
 
     def __init__(self, configuration: AutomationRequestContext):
+        # Our Embedding model - converts our text to vector embedding
+        self.embeddings = GoogleGenerativeAIEmbeddings(
+            model="gemini-embedding-001",
+            api_key=SETTINGS.GOOGLE_API_KEY
+        )
         self.config = configuration
-        self.embeddings = OllamaEmbeddings(model=SETTINGS.LLM_EMBEDDING_MODEL)
+        # self.embeddings = OllamaEmbeddings(model=SETTINGS.LLM_EMBEDDING_MODEL)
         self.automator: BaseAutomator = get_automator_by_name(configuration.platform)()
         self.retriever = self._load_retriever()
-
-        base_model = OllamaLLM(model=SETTINGS.LLM_MODEL_NAME, temperature=0.4, num_predict=256)
+        base_model = ChatGoogleGenerativeAI(
+            model="gemini-2.5-flash",
+            temperature=0,
+            api_key=SETTINGS.GOOGLE_API_KEY
+        )
+        # base_model = OllamaLLM(model=SETTINGS.LLM_MODEL_NAME)
         self.tools = get_all_tools_initialized(self.retriever)
         self.model = base_model
 
@@ -153,7 +164,7 @@ class AutomatorGraph:
             chunk_size=1000, chunk_overlap=200
         ).split_documents(pages)
 
-        persist_dir = SETTINGS.CHROMA_DB_URL
+        persist_dir = f"{SETTINGS.CHROMA_DB_URL}/{SETTINGS.LLM_MODEL}"
         os.makedirs(persist_dir, exist_ok=True)
 
         vector_store = Chroma.from_documents(
@@ -269,9 +280,8 @@ class AutomatorGraph:
         if not filtered:
             logger.warning(
                 "[job_category_filtering_node] LLM returned no matching category IDs. "
-                "Falling back to all available categories."
             )
-            filtered = all_categories
+            return {}
 
         logger.info(
             f"[job_category_filtering_node] {len(all_categories)} → {len(filtered)} categories: "

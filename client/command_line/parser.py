@@ -1,6 +1,7 @@
 from actions.application_actions import ApplicationActions
 from actions.bio_actions import BioActions
 from actions.help_actions import HelpActions
+from actions.job_hunt_actions import JobHuntActions
 from actions.preferences_actions import PreferencesActions
 from actions.project_actions import ProjectActions
 from actions.resume_actions import ResumeActions
@@ -14,6 +15,7 @@ COMMAND_MAP = {
     "preference": PreferencesActions,
     "project": ProjectActions,
     "work_experience": WorkExperienceActions,
+    "job_hunt": JobHuntActions,
     "help": HelpActions,
 }
 

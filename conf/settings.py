@@ -5,6 +5,9 @@ import toml
 from conf.configuration import FULL_CONFIG
 from loguru import logger
 from utils.types import ClientType
+from dotenv import load_dotenv
+
+load_dotenv()
 
 Modules = Literal["workable", "wellfound", "web3_career"]
 
@@ -51,8 +54,9 @@ class Settings:
         self.WEB_HOST = os.getenv("WEB_HOST", "0.0.0.0")
         self.WEB_PORT = int(os.getenv("WEB_PORT", 5050))
         self.LLM_MODEL = os.getenv("LLM_MODEL", "ollama")
-        self.LLM_MODEL_NAME = os.getenv("LLM_MODEL_NAME", "qwen3.5")
+        self.LLM_MODEL_NAME = os.getenv("LLM_MODEL_NAME", "smallthinker")
         self.LLM_EMBEDDING_MODEL = os.getenv("LLM_EMBEDDING_MODEL", "nomic-embed-text")
+        self.GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
 
     def _path_settings(self):
         """
@@ -130,6 +134,7 @@ class Settings:
             if os.path.isdir(os.path.join(self.MODULES_DIR, f))
         ]
         modules.remove("core")  # remove the core module as it is not a module
+        modules.remove("__pycache__")  # remove the __pycache__ directory
         return modules
 
 
