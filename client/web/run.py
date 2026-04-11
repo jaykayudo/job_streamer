@@ -1,9 +1,9 @@
 import asyncio
-import threading
 
 from client.web.app import app
 from client.web.ws_server import WS_PORT, start_ws_server
 from conf.settings import SETTINGS
+from utils.thread_manager import thread_manager
 
 WEB_PORT = SETTINGS.WEB_PORT
 WEB_HOST = SETTINGS.WEB_HOST
@@ -27,8 +27,7 @@ def main():
     print(f"  WS     → ws://{WS_HOST}:{WS_PORT}")
 
     # Flask runs in a background thread (it's sync/blocking).
-    flask_thread = threading.Thread(target=_run_flask, daemon=True)
-    flask_thread.start()
+    thread_manager.submit(_run_flask)
 
     # WebSocket server owns the async event loop on the main thread.
     asyncio.run(start_ws_server())

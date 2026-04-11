@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import threading
 from typing import List
 
 from tabulate import tabulate
@@ -16,6 +15,7 @@ from services.database.resume import ResumeService
 from storage.core.models import Bio, Resume
 from utils.context import AutomationRequestContext
 from utils.logging import JobStreamerLogger
+from utils.thread_manager import thread_manager
 from utils.types import MessageType, WorkStyle
 
 logger = JobStreamerLogger().get_logger()
@@ -92,12 +92,7 @@ class JobHuntActions(BaseAction):
             f"Job hunt started for platform '{platform}'. "
             f"Targeting {job_count} job(s). Running in background...",
         )
-        thread = threading.Thread(
-            target=self._run_graph,
-            args=(context,),
-            daemon=True,
-        )
-        thread.start()
+        thread_manager.submit(self._run_graph, context)
 
     def history(self):
         """
