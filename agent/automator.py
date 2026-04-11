@@ -83,7 +83,7 @@ class AutomatorGraph:
         self.automator: BaseAutomator = get_automator_by_name(configuration.platform)()
         self.retriever = self._load_retriever()
 
-        base_model = OllamaLLM(model=SETTINGS.LLM_MODEL_NAME, temperature=0.4, num_predict=256)
+        base_model = OllamaLLM(model=SETTINGS.LLM_MODEL_NAME)
         self.tools = get_all_tools_initialized(self.retriever)
         self.model = base_model
 
@@ -269,9 +269,8 @@ class AutomatorGraph:
         if not filtered:
             logger.warning(
                 "[job_category_filtering_node] LLM returned no matching category IDs. "
-                "Falling back to all available categories."
             )
-            filtered = all_categories
+            return {}
 
         logger.info(
             f"[job_category_filtering_node] {len(all_categories)} → {len(filtered)} categories: "

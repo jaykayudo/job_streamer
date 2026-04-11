@@ -51,7 +51,7 @@ class Settings:
         self.WEB_HOST = os.getenv("WEB_HOST", "0.0.0.0")
         self.WEB_PORT = int(os.getenv("WEB_PORT", 5050))
         self.LLM_MODEL = os.getenv("LLM_MODEL", "ollama")
-        self.LLM_MODEL_NAME = os.getenv("LLM_MODEL_NAME", "qwen3.5")
+        self.LLM_MODEL_NAME = os.getenv("LLM_MODEL_NAME", "smallthinker")
         self.LLM_EMBEDDING_MODEL = os.getenv("LLM_EMBEDDING_MODEL", "nomic-embed-text")
 
     def _path_settings(self):

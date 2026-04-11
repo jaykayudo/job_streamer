@@ -43,5 +43,7 @@ class HelpActions(BaseAction):
             17. List all applications: (command: application list)
             18. Get an application: (command: application get)
             19. Delete an application: (command: application delete)
+            20. Start a job hunt: (command: job_hunt start)
+            21. Job Hunt History: (command: job_hunt history)
         """
         self.interactor.writer(MessageType.INFO, message)
