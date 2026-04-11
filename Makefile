@@ -41,6 +41,12 @@ clean:
 run_client:
 	python -m bin.start
 
+run_cli_client:
+	poetry run python3 -m client.command_line.run
+
+run_web_client:
+	poetry run python3 -m client.web.run
+
 docker_full_run:
 	docker compose up --build
 	docker attach job-streamer
