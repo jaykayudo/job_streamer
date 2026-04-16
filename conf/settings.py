@@ -38,7 +38,7 @@ class Settings:
         Load settings from environment variables.
         """
         self.DEBUG = bool(os.getenv("DEBUG", 1))
-        self.SE_NODE_MAX_SESSIONS = os.getenv("SE_NODE_MAX_SESSIONS", 10)
+        self.SE_NODE_MAX_SESSIONS = int(os.getenv("SE_NODE_MAX_SESSIONS", 10))
         self.SE_NODE_SESSION_TIMEOUT = os.getenv("SE_NODE_SESSION_TIMEOUT", 300)
         self.REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
         self.REDIS_PORT = os.getenv("REDIS_PORT", 6379)

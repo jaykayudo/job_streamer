@@ -64,16 +64,7 @@ class JobDetails(BaseModel):
         return self.job.title
 
 
-class JobFilter(BaseModel):
-    """
-    Represent a filter for a job (like a job category)
-    """
 
-    id: Optional[str] = None
-    name: str
-
-    def __str__(self):
-        return self.name
 
 
 class JobApplicationDetails(BaseModelWithUniqueId):
@@ -91,7 +82,7 @@ class JobApplicationDetails(BaseModelWithUniqueId):
         return self.title
 
 
-class JobApplicationDetailsAnswer(BaseModelWithUniqueId):
+class JobApplicationDetailsAnswer(BaseModel):
     """
     Represent the answer to a job application form field
     """
@@ -153,6 +144,22 @@ class Category(BaseModelWithUniqueId):
     """
 
     name: str
+
+    def __str__(self):
+        return self.name
+
+
+class JobFilter(BaseModel):
+    """
+    Represent a filter for a job (like a job category)
+    """
+
+    id: Optional[str] = None
+    categories: List[Category]
+    industry: Optional[List[Industry]] = None
+    location: Optional[List[Location]] = None
+    skill: Optional[List[Skill]] = None
+    hiring_type: Optional[List[HiringType]] = None
 
     def __str__(self):
         return self.name

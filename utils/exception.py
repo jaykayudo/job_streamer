@@ -21,6 +21,13 @@ class DriverException(BaseException):
 
     pass
 
+class UserNotLoggedInException(BaseException):
+    """
+    Exception raised when the user is not logged in.
+    """
+
+    pass
+
 
 class StopProcessException(BaseException):
     """
