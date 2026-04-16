@@ -17,13 +17,20 @@ from utils.types import Reader, SelectionType
 
 class BaseAutomator(ABC):
     @abstractmethod
-    def login(self, reader: Reader):
+    def start(self):
+        """
+        Start the automator.
+        This method should be implemented by the subclass.
+        """
+        pass
+    
+    @abstractmethod
+    def login(self, reader: Reader) -> bool:
         """
         Login to the platform
         """
         pass
 
-    @abstractmethod
     def logout(self):
         """
         Logout from the platform
@@ -37,28 +44,24 @@ class BaseAutomator(ABC):
         """
         pass
 
-    @abstractmethod
     def get_locations(self) -> tuple[List[Location], SelectionType]:
         """
         Get the locations of the platform
         """
         pass
 
-    @abstractmethod
     def get_skills(self) -> tuple[List[Skill], SelectionType] | None:
         """
         Get the skills of the platform
         """
         pass
 
-    @abstractmethod
     def get_hiring_types(self) -> tuple[List[HiringType], SelectionType] | None:
         """
         Get the hiring types of the platform
         """
         pass
 
-    @abstractmethod
     def get_industries(self) -> tuple[List[Industry], SelectionType] | None:
         """
         Get the industries of the platform
@@ -67,7 +70,7 @@ class BaseAutomator(ABC):
 
     @abstractmethod
     def get_jobs(
-        self, count: Optional[int] = None, filters: Optional[List[JobFilter]] = None
+        self, filters: JobFilter, count: Optional[int] = None
     ) -> List[Job]:
         """
         Get jobs from the platform
@@ -96,7 +99,6 @@ class BaseAutomator(ABC):
         """
         pass
 
-    @abstractmethod
     def search_jobs(self, query: str) -> List[Job]:
         """
         Search for jobs on the platform

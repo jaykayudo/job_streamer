@@ -83,7 +83,7 @@ class MockAutomator(BaseAutomator):
         return industries, SelectionType.MULTIPLE
 
     def get_jobs(
-        self, count: Optional[int] = None, filters: Optional[List[JobFilter]] = None
+        self, filters: JobFilter, count: Optional[int] = None
     ) -> List[Job]:
         jobs = [
             Job(id="job_1", title="Senior Backend Engineer", url="https://mock.example.com/jobs/1", location="Remote", platform=self.PLATFORM),

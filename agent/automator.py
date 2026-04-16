@@ -319,13 +319,13 @@ class AutomatorGraph:
         seen_ids: set[str] = set()
         all_jobs = []
 
-        for category in categories:
-            filters = [JobFilter(id=category.id, name=category.name)]
-            jobs = self.automator.get_jobs(count=job_count, filters=filters)
-            for job in jobs:
-                if job.id not in seen_ids:
-                    seen_ids.add(job.id)
-                    all_jobs.append(job)
+        
+        filter = JobFilter(categories=categories)
+        jobs = self.automator.get_jobs(count=job_count, filter=filter)
+        for job in jobs:
+            if job.id not in seen_ids:
+                seen_ids.add(job.id)
+                all_jobs.append(job)
 
         logger.info(f"[jobs_retrieval_node] Retrieved {len(all_jobs)} unique jobs across all categories.")
 
